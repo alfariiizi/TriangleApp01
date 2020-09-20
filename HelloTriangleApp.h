@@ -10,6 +10,7 @@ public:
 
 private:
     void InitVulkan();
+    void CreateInstance();
     void InitWindow();
     void MainLoop();
     void Cleanup();
@@ -19,5 +20,6 @@ public:
     static constexpr int ScreenHeight = 600;
 
 private:
-    GLFWwindow* window = nullptr;
+    GLFWwindow* _window = nullptr;
+    VkInstance _instance;
 };
