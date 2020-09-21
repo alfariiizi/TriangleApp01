@@ -1,0 +1,12 @@
+CFLAGS = -std=c++17 -O2
+LDFLAGS = -lglfw -lvulkan -ldl -lpthread
+SRC = *.c: $(SRC)
+	g++ $(CFLAGS) -o TriangleApp $(SRC) $(LDFLAGS)
+
+.PHONY: test clean
+
+test: VulkanTest
+	./VulkanTest
+
+clean:
+	rm -f VulkanTest
