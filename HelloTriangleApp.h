@@ -31,13 +31,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
     void* pUserData
 );
 void SetupDebugMessenger();
-void PopulateDebugUtilsCreateInfo( VkDebugUtilsMessengerCreateInfoEXT& createInfo );
-VkResult CreateDebugUtilsMessengerEXT(
-    VkInstance instance,
-    VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-    const VkAllocationCallbacks* pAllocator,
-    VkDebugUtilsMessengerEXT* pDebugMessenger
-);
 void DestroyDebugUtilsMessengerEXT(
     VkInstance instance,
     VkDebugUtilsMessengerEXT debugMessenger,
@@ -49,6 +42,16 @@ void DestroyDebugUtilsMessengerEXT(
 
 // Checker Method
     bool CheckValidationErrorSupport();
+
+// Populate Method
+void PopulateApplicationInfo( VkApplicationInfo& appInfo );
+void PopulateDebugUtilsCreateInfo( VkDebugUtilsMessengerCreateInfoEXT& createInfo );
+VkResult CreateDebugUtilsMessengerEXT(
+    VkInstance instance,
+    VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+    const VkAllocationCallbacks* pAllocator,
+    VkDebugUtilsMessengerEXT* pDebugMessenger
+);
 
 public:
     static constexpr int ScreenWidth = 800;
