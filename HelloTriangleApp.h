@@ -9,6 +9,8 @@ const std::vector<const char*> validationLayerExtension {
     "VK_LAYER_KHRONOS_validation"
 };
 
+#include "QueueFamilyIndices.h"
+
 
 class HelloTriangleApp
 {
@@ -48,6 +50,10 @@ private:
 // Physical Device
     void PickPhysicalDevice();
     bool IsDeviceSuitable( VkPhysicalDevice physicalDevice );
+
+//Queue Families
+    QueueFamilyIndices FindQueueFamilies( VkPhysicalDevice physicalDevice );
+
 
 // General Getter Method
     std::vector<const char*> GetRequiredExtensions();

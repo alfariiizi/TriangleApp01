@@ -183,8 +183,37 @@ bool HelloTriangleApp::IsDeviceSuitable( VkPhysicalDevice physicalDevice )
     // + Some code to rateDeviceSuitability or maybe just pick suitabledevice that you needed
     
     // I just need vulkan works LOL, so I leave it like this.
-    return true;
+    QueueFamilyIndices indices = FindQueueFamilies( _physicalDevice );
+
+    return indices.IsComplete();
 }
+
+// --- Queue Families ---
+QueueFamilyIndices HelloTriangleApp::FindQueueFamilies( VkPhysicalDevice physicalDevice )
+{
+    QueueFamilyIndices indices;
+
+    // logic to find queue families
+    uint32_t queueFamilyCount = 0U;
+    vkGetPhysicalDeviceQueueFamilyProperties( physicalDevice, &queueFamilyCount, nullptr );
+    std::vector<VkQueueFamilyProperties> propertiesQueueFamily( queueFamilyCount );
+    vkGetPhysicalDeviceQueueFamilyProperties( physicalDevice, &queueFamilyCount, propertiesQueueFamily.data() );
+
+    int i = 0;
+    for( const auto& property : propertiesQueueFamily )
+    {
+        if( property.queueFlags & VK_QUEUE_GRAPHICS_BIT )
+            indices.graphicsFamily = i;
+        
+        // ntar disini diisi suatu code untuk queue family lainnya.
+
+        if( indices.IsComplete() )
+            break;
+    }
+
+    return indices;
+}
+
 
 
 
