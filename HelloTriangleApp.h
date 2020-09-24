@@ -24,34 +24,40 @@ private:
     void Cleanup();
 
 // Debug
-static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT typeSeverity,
-    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    void* pUserData
-);
-void SetupDebugMessenger();
-void DestroyDebugUtilsMessengerEXT(
-    VkInstance instance,
-    VkDebugUtilsMessengerEXT debugMessenger,
-    const VkAllocationCallbacks* pAllocator
-);
-
-// Getter Method
-    std::vector<const char*> GetRequiredExtensions();
-
-// Checker Method
+    static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT typeSeverity,
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+        void* pUserData
+    );
+    void SetupDebugMessenger();
+    void DestroyDebugUtilsMessengerEXT(
+        VkInstance instance,
+        VkDebugUtilsMessengerEXT debugMessenger,
+        const VkAllocationCallbacks* pAllocator
+    );
+    VkResult CreateDebugUtilsMessengerEXT(
+        VkInstance instance,
+        VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+        const VkAllocationCallbacks* pAllocator,
+        VkDebugUtilsMessengerEXT* pDebugMessenger
+    );
     bool CheckValidationErrorSupport();
 
+
+// Physical Device
+    void PickPhysicalDevice();
+    bool IsDeviceSuitable( VkPhysicalDevice physicalDevice );
+
+// General Getter Method
+    std::vector<const char*> GetRequiredExtensions();
+
+
 // Populate Method
-void PopulateApplicationInfo( VkApplicationInfo& appInfo );
-void PopulateDebugUtilsCreateInfo( VkDebugUtilsMessengerCreateInfoEXT& createInfo );
-VkResult CreateDebugUtilsMessengerEXT(
-    VkInstance instance,
-    VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-    const VkAllocationCallbacks* pAllocator,
-    VkDebugUtilsMessengerEXT* pDebugMessenger
-);
+    void PopulateApplicationInfo( VkApplicationInfo& appInfo );
+    void PopulateDebugUtilsCreateInfo( VkDebugUtilsMessengerCreateInfoEXT& createInfo );
+
+
 
 public:
     static constexpr int ScreenWidth = 800;
@@ -61,4 +67,5 @@ private:
     GLFWwindow* _window = nullptr;
     VkInstance _instance;
     VkDebugUtilsMessengerEXT _debugMessenger;
+    VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;
 };

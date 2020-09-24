@@ -152,6 +152,41 @@ void HelloTriangleApp::DestroyDebugUtilsMessengerEXT(
 }
 
 
+// --- Physical Device ---
+void HelloTriangleApp::PickPhysicalDevice()
+{
+    uint32_t deviceCount = 0U;
+    vkEnumeratePhysicalDevices( _instance, &deviceCount, nullptr );
+    std::vector<VkPhysicalDevice> physicalDevices( deviceCount );
+    vkEnumeratePhysicalDevices( _instance, &deviceCount, physicalDevices.data() );
+
+    for( const auto& physicalDevice : physicalDevices )
+    {
+        if( IsDeviceSuitable( physicalDevice ) )
+        {
+            _physicalDevice = physicalDevice;
+            break;
+        }
+    }
+
+    if( _physicalDevice == VK_NULL_HANDLE )
+        throw std::runtime_error( "Failed to find suitable physical device!" );
+
+}
+
+bool HelloTriangleApp::IsDeviceSuitable( VkPhysicalDevice physicalDevice )
+{
+    // VkPhysicalDeviceProperties properties;
+    // vkGetPhysicalDeviceProperties( physicalDevice, &properties );
+    // VkPhysicalDeviceFeatures features;
+    // vkGetPhysicalDeviceFeatures( physicalDevice, &features );
+    // + Some code to rateDeviceSuitability or maybe just pick suitabledevice that you needed
+    
+    // I just need vulkan works LOL, so I leave it like this.
+    return true;
+}
+
+
 
 // --- Getter Method ---
 
