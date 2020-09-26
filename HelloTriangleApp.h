@@ -46,6 +46,8 @@ private:
     );
     bool CheckValidationErrorSupport();
 
+// Surface
+    void CreateSurface();
 
 // Physical Device
     void PickPhysicalDevice();
@@ -79,4 +81,7 @@ private:
     VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;
     VkDevice _device;
     VkQueue _queue;
+
+    // presentation
+    VkSurfaceKHR _surface;
 };

@@ -88,6 +88,8 @@ void HelloTriangleApp::Cleanup()
 {
     vkDestroyDevice( _device, nullptr );
 
+    vkDestroySurfaceKHR( _instance, _surface, nullptr );
+
     if( enableValidationLayer )
         DestroyDebugUtilsMessengerEXT( _instance, _debugMessenger, nullptr );
     
@@ -156,6 +158,19 @@ void HelloTriangleApp::DestroyDebugUtilsMessengerEXT(
 }
 
 
+
+// --- Surface ---
+void HelloTriangleApp::CreateSurface()
+{
+    if( glfwCreateWindowSurface( _instance, _window, nullptr, &_surface)
+        !=
+        VK_SUCCESS )
+    {
+        throw std::runtime_error( "Failed to create surface!" );
+    }
+}
+
+
 // --- Physical Device ---
 void HelloTriangleApp::PickPhysicalDevice()
 {
@@ -192,6 +207,7 @@ bool HelloTriangleApp::IsDeviceSuitable( VkPhysicalDevice physicalDevice )
     return indices.IsComplete();
 }
 
+
 // --- Queue Families ---
 QueueFamilyIndices HelloTriangleApp::FindQueueFamilies( VkPhysicalDevice physicalDevice )
 {
@@ -210,6 +226,11 @@ QueueFamilyIndices HelloTriangleApp::FindQueueFamilies( VkPhysicalDevice physica
             indices.graphicsFamily = i;
         
         // ntar disini diisi suatu code untuk queue family lainnya.
+        // nah ini queue family lainnya :
+        VkBool32 presentSupport = VK_FALSE;
+        vkGetPhysicalDeviceSurfaceSupportKHR( _physicalDevice, i, _surface, &presentSupport );
+        if( presentSupport )
+            indices.presentFamily = i;
 
         if( indices.IsComplete() )
             break;
