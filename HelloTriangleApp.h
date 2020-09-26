@@ -51,8 +51,11 @@ private:
     void PickPhysicalDevice();
     bool IsDeviceSuitable( VkPhysicalDevice physicalDevice );
 
-//Queue Families
+// Queue Families
     QueueFamilyIndices FindQueueFamilies( VkPhysicalDevice physicalDevice );
+
+// Logical Device
+    void CreateLogicalDevice();
 
 
 // General Getter Method
@@ -74,4 +77,6 @@ private:
     VkInstance _instance;
     VkDebugUtilsMessengerEXT _debugMessenger;
     VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;
+    VkDevice _device;
+    VkQueue _queue;
 };

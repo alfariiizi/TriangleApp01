@@ -24,8 +24,10 @@ void HelloTriangleApp::Run()
 void HelloTriangleApp::InitVulkan()
 {
     CreateInstance();
-
     if( enableValidationLayer ) SetupDebugMessenger();
+
+    PickPhysicalDevice();   // physical device
+    CreateLogicalDevice();  // logical device
 }
 
 void HelloTriangleApp::CreateInstance()
@@ -84,6 +86,8 @@ void HelloTriangleApp::MainLoop()
 
 void HelloTriangleApp::Cleanup()
 {
+    vkDestroyDevice( _device, nullptr );
+
     if( enableValidationLayer )
         DestroyDebugUtilsMessengerEXT( _instance, _debugMessenger, nullptr );
     
@@ -183,7 +187,7 @@ bool HelloTriangleApp::IsDeviceSuitable( VkPhysicalDevice physicalDevice )
     // + Some code to rateDeviceSuitability or maybe just pick suitabledevice that you needed
     
     // I just need vulkan works LOL, so I leave it like this.
-    QueueFamilyIndices indices = FindQueueFamilies( _physicalDevice );
+    QueueFamilyIndices indices = FindQueueFamilies( physicalDevice );
 
     return indices.IsComplete();
 }
@@ -212,6 +216,54 @@ QueueFamilyIndices HelloTriangleApp::FindQueueFamilies( VkPhysicalDevice physica
     }
 
     return indices;
+}
+
+
+
+// --- Logical Device ---
+void HelloTriangleApp::CreateLogicalDevice()
+{
+    QueueFamilyIndices indices = FindQueueFamilies( _physicalDevice );
+
+    VkDeviceQueueCreateInfo logDevQueueInfo{};
+    float queuePriority = 1.0f;
+
+    logDevQueueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    logDevQueueInfo.pNext = nullptr;
+    logDevQueueInfo.queueCount = 1;
+    logDevQueueInfo.queueFamilyIndex = indices.graphicsFamily.value();
+    logDevQueueInfo.pQueuePriorities = &queuePriority;
+
+    VkPhysicalDeviceFeatures deviceFeatures{};
+    /*
+     * ntar deviceFeatures nya kita isi disini
+     */
+
+    VkDeviceCreateInfo deviceInfo{};
+    deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    deviceInfo.pNext = nullptr;
+    deviceInfo.queueCreateInfoCount = 1;
+    deviceInfo.pQueueCreateInfos = &logDevQueueInfo;
+    deviceInfo.pEnabledFeatures = &deviceFeatures;  // device features nya
+
+    if( enableValidationLayer )
+    {
+        deviceInfo.enabledLayerCount = static_cast<uint32_t>( validationLayerExtension.size() );
+        deviceInfo.ppEnabledLayerNames = validationLayerExtension.data();
+    }
+    else
+        deviceInfo.enabledLayerCount = 0;
+    
+
+    if( vkCreateDevice( _physicalDevice, &deviceInfo, nullptr, &_device )
+        !=
+        VK_SUCCESS )
+    {
+        throw std::runtime_error( "Failed to create logical device!" );
+    }
+
+    // create queue
+    vkGetDeviceQueue( _device, indices.graphicsFamily.value(), 0, &_queue );
 }
 
 
