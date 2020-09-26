@@ -80,7 +80,10 @@ private:
     VkDebugUtilsMessengerEXT _debugMessenger;
     VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;
     VkDevice _device;
-    VkQueue _queue;
+
+    // queue
+    VkQueue _graphicsQueue;
+    VkQueue _presentQueue;
 
     // presentation
     VkSurfaceKHR _surface;

@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstring>
+#include <set>
 
 #ifdef _DEBUG
 const bool enableValidationLayer = true;
@@ -15,8 +16,8 @@ const bool enableValidationLayer = false;
 
 void HelloTriangleApp::Run()
 {
-    InitVulkan();
     InitWindow();
+    InitVulkan();
     MainLoop();
     Cleanup();
 }
@@ -25,6 +26,7 @@ void HelloTriangleApp::InitVulkan()
 {
     CreateInstance();
     if( enableValidationLayer ) SetupDebugMessenger();
+    CreateSurface();    // surface
 
     PickPhysicalDevice();   // physical device
     CreateLogicalDevice();  // logical device
@@ -228,7 +230,7 @@ QueueFamilyIndices HelloTriangleApp::FindQueueFamilies( VkPhysicalDevice physica
         // ntar disini diisi suatu code untuk queue family lainnya.
         // nah ini queue family lainnya :
         VkBool32 presentSupport = VK_FALSE;
-        vkGetPhysicalDeviceSurfaceSupportKHR( _physicalDevice, i, _surface, &presentSupport );
+        vkGetPhysicalDeviceSurfaceSupportKHR( physicalDevice, i, _surface, &presentSupport );
         if( presentSupport )
             indices.presentFamily = i;
 
@@ -246,14 +248,22 @@ void HelloTriangleApp::CreateLogicalDevice()
 {
     QueueFamilyIndices indices = FindQueueFamilies( _physicalDevice );
 
-    VkDeviceQueueCreateInfo logDevQueueInfo{};
+    
+    std::vector<VkDeviceQueueCreateInfo> logDevQueueInfos;  // queue infos
+    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };    
     float queuePriority = 1.0f;
 
-    logDevQueueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    logDevQueueInfo.pNext = nullptr;
-    logDevQueueInfo.queueCount = 1;
-    logDevQueueInfo.queueFamilyIndex = indices.graphicsFamily.value();
-    logDevQueueInfo.pQueuePriorities = &queuePriority;
+    for( auto& queueFamily : uniqueQueueFamilies )
+    {
+        VkDeviceQueueCreateInfo logDevQueueInfo{}; // logical device queue create info
+        logDevQueueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        logDevQueueInfo.pNext = nullptr;
+        logDevQueueInfo.queueCount = 1;
+        logDevQueueInfo.queueFamilyIndex = queueFamily;
+        logDevQueueInfo.pQueuePriorities = &queuePriority;
+
+        logDevQueueInfos.push_back(logDevQueueInfo);
+    }
 
     VkPhysicalDeviceFeatures deviceFeatures{};
     /*
@@ -263,8 +273,8 @@ void HelloTriangleApp::CreateLogicalDevice()
     VkDeviceCreateInfo deviceInfo{};
     deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     deviceInfo.pNext = nullptr;
-    deviceInfo.queueCreateInfoCount = 1;
-    deviceInfo.pQueueCreateInfos = &logDevQueueInfo;
+    deviceInfo.queueCreateInfoCount = static_cast<uint32_t>( logDevQueueInfos.size() ); // jumlah queue family
+    deviceInfo.pQueueCreateInfos = logDevQueueInfos.data(); // vector queue family crete infos nya
     deviceInfo.pEnabledFeatures = &deviceFeatures;  // device features nya
 
     if( enableValidationLayer )
@@ -284,7 +294,8 @@ void HelloTriangleApp::CreateLogicalDevice()
     }
 
     // create queue
-    vkGetDeviceQueue( _device, indices.graphicsFamily.value(), 0, &_queue );
+    vkGetDeviceQueue( _device, indices.graphicsFamily.value(), 0, &_graphicsQueue );
+    vkGetDeviceQueue( _device, indices.presentFamily.value(), 0, &_presentQueue );
 }
 
 
