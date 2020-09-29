@@ -206,7 +206,14 @@ bool HelloTriangleApp::IsDeviceSuitable( VkPhysicalDevice physicalDevice )
     // I just need vulkan works LOL, so I leave it like this.
     QueueFamilyIndices indices = FindQueueFamilies( physicalDevice );
 
-    return indices.IsComplete();
+    bool isExtensionSupported = CheckDeviceExtensionSupport( physicalDevice );
+
+    return indices.IsComplete() && isExtensionSupported;
+
+    /*
+    *   from :
+    *       Swapchain -> Checking for swapchain support
+    */
 }
 
 
@@ -301,7 +308,7 @@ void HelloTriangleApp::CreateLogicalDevice()
 
 
 
-// --- Getter Method ---
+// --- Extensions ---
 
 std::vector<const char*> HelloTriangleApp::GetRequiredExtensions()
 {
@@ -313,6 +320,29 @@ std::vector<const char*> HelloTriangleApp::GetRequiredExtensions()
     extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 
     return extensions;
+}
+
+bool HelloTriangleApp::CheckDeviceExtensionSupport( VkPhysicalDevice physicalDevice )
+{
+    uint32_t extensionCount = 0U;
+    vkEnumerateDeviceExtensionProperties( physicalDevice, nullptr, &extensionCount, nullptr );
+    std::vector<VkExtensionProperties> avaliableExtensions( extensionCount );
+    vkEnumerateDeviceExtensionProperties( physicalDevice, nullptr, &extensionCount, avaliableExtensions.data() );
+
+    std::set<std::string> requiredExtensions { deviceExtensions.begin(), deviceExtensions.end() };
+
+    for( const auto& extension : avaliableExtensions )
+    {
+        requiredExtensions.erase( extension.extensionName );
+    }
+
+    return requiredExtensions.empty();
+
+    /*
+    * from :
+    *   Swapchain -> Checking for swapchain support
+    * 
+    */
 }
 
 

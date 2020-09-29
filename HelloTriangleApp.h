@@ -9,6 +9,10 @@ const std::vector<const char*> validationLayerExtension {
     "VK_LAYER_KHRONOS_validation"
 };
 
+const std::vector<const char*> deviceExtensions {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME // this extensions is for swapchain support
+};
+
 #include "QueueFamilyIndices.h"
 
 
@@ -60,8 +64,9 @@ private:
     void CreateLogicalDevice();
 
 
-// General Getter Method
+// Eextensions
     std::vector<const char*> GetRequiredExtensions();
+    bool CheckDeviceExtensionSupport( VkPhysicalDevice physicalDevice );
 
 
 // Populate Method
