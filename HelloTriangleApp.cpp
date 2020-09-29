@@ -292,6 +292,9 @@ void HelloTriangleApp::CreateLogicalDevice()
     else
         deviceInfo.enabledLayerCount = 0;
     
+    deviceInfo.enabledExtensionCount = static_cast<uint32_t>( deviceExtensions.size() );
+    deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
+    
 
     if( vkCreateDevice( _physicalDevice, &deviceInfo, nullptr, &_device )
         !=
@@ -303,6 +306,16 @@ void HelloTriangleApp::CreateLogicalDevice()
     // create queue
     vkGetDeviceQueue( _device, indices.graphicsFamily.value(), 0, &_graphicsQueue );
     vkGetDeviceQueue( _device, indices.presentFamily.value(), 0, &_presentQueue );
+
+
+    /*
+     *  from :
+     *      ...
+     *      ...
+     *      Swapchain -> Enabling device extensions
+     */
+
+
 }
 
 
