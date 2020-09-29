@@ -208,11 +208,19 @@ bool HelloTriangleApp::IsDeviceSuitable( VkPhysicalDevice physicalDevice )
 
     bool isExtensionSupported = CheckDeviceExtensionSupport( physicalDevice );
 
-    return indices.IsComplete() && isExtensionSupported;
+    bool swapChainAdequate = false;
+    if( isExtensionSupported )
+    {
+        SwapchainSupportDetails details = QuerySwapchainSupport( physicalDevice );
+        swapChainAdequate = !details.IsEmpty();
+    }
+
+    return indices.IsComplete() && isExtensionSupported && swapChainAdequate;
 
     /*
     *   from :
     *       Swapchain -> Checking for swapchain support
+    *       Swapchain -> Querying details of swapchain support 
     */
 }
 
@@ -318,6 +326,34 @@ void HelloTriangleApp::CreateLogicalDevice()
 
 }
 
+
+// --- Swapchain ---
+SwapchainSupportDetails HelloTriangleApp::QuerySwapchainSupport( VkPhysicalDevice physicalDevice )
+{
+    SwapchainSupportDetails details;
+
+    // surface capabilities :
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR( physicalDevice, _surface, &details.surfaceCapabilities );
+
+    // surface formats :
+    uint32_t formatCount = 0U;
+    vkGetPhysicalDeviceSurfaceFormatsKHR( physicalDevice, _surface, &formatCount, nullptr );
+    details.formats.resize( formatCount );
+    vkGetPhysicalDeviceSurfaceFormatsKHR( physicalDevice, _surface, &formatCount, details.formats.data() );
+
+    // presentations modes :
+    uint32_t presentCount = 0U;
+    vkGetPhysicalDeviceSurfacePresentModesKHR( physicalDevice, _surface, &presentCount, nullptr );
+    details.presentModes.resize( presentCount );
+    vkGetPhysicalDeviceSurfacePresentModesKHR( physicalDevice, _surface, &presentCount, details.presentModes.data() );
+
+    return details;
+
+    /*
+    *  from :
+    *      Swapchain -> Querying details of swapchain support 
+    */
+}
 
 
 

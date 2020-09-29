@@ -14,6 +14,7 @@ const std::vector<const char*> deviceExtensions {
 };
 
 #include "QueueFamilyIndices.h"
+#include "SwapchainSupportDetails.h"
 
 
 class HelloTriangleApp
@@ -62,6 +63,9 @@ private:
 
 // Logical Device
     void CreateLogicalDevice();
+
+// Swapchain
+    SwapchainSupportDetails QuerySwapchainSupport( VkPhysicalDevice physicalDevice );
 
 
 // Eextensions
