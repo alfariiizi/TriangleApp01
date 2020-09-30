@@ -355,6 +355,59 @@ SwapchainSupportDetails HelloTriangleApp::QuerySwapchainSupport( VkPhysicalDevic
     */
 }
 
+VkExtent2D HelloTriangleApp::ChooseExtent2D( const VkSurfaceCapabilitiesKHR& capabilities )
+{
+    if( capabilities.currentExtent.width != UINT32_MAX )
+        return capabilities.currentExtent;
+    
+    
+    VkExtent2D actualExtent = { HelloTriangleApp::ScreenWidth, HelloTriangleApp::ScreenHeight };
+
+    actualExtent.width = std::clamp( actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width );
+    actualExtent.height = std::clamp( actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height );
+
+    return actualExtent;
+
+    /*
+    *  from :
+    *      Swapchain -> Choosing the right settings for the swapchain -> Swap Extent 
+    */
+}
+
+VkSurfaceFormatKHR HelloTriangleApp::ChooseFormat( const std::vector<VkSurfaceFormatKHR>& avaliableFormats )
+{
+    for( const auto& avaliableFormat : avaliableFormats )
+    {
+        if( avaliableFormat.format == VK_FORMAT_B8G8R8_SRGB &&
+            avaliableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR )
+        {
+            return avaliableFormat;
+        }
+    }
+    return avaliableFormats[0];
+
+    /*
+    *  from :
+    *      Swapchain -> Choosing the right settings for the swapchain -> Surface Format
+    */
+}
+
+VkPresentModeKHR HelloTriangleApp::ChoosePresentMode( const std::vector<VkPresentModeKHR>& availablePresentModes )
+{
+    for( const auto& availablePresentMode : availablePresentModes )
+    {
+        if( availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR )
+            return availablePresentMode;
+    }
+
+    return VK_PRESENT_MODE_FIFO_KHR;
+
+    /*
+    *  from :
+    *      Swapchain -> Choosing the right settings for the swapchain -> Presentation Mode
+    */
+}
+
 
 
 // --- Extensions ---
