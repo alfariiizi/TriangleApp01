@@ -104,4 +104,7 @@ private:
 
     // swapchain
     VkSwapchainKHR _swapchain;
+    std::vector<VkImage> _swapchainImages;  // swapchain image
+    VkFormat _swapchainImageFormat;     // swapchain format
+    VkExtent2D _swapchainExtent;        // swapchain extent
 };
