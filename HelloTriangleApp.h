@@ -66,6 +66,11 @@ private:
 
 // Swapchain
     SwapchainSupportDetails QuerySwapchainSupport( VkPhysicalDevice physicalDevice );
+    VkExtent2D ChooseSwapchainExtent2D( const VkSurfaceCapabilitiesKHR& capabilities );
+    VkSurfaceFormatKHR ChooseSwapchainFormat( const std::vector<VkSurfaceFormatKHR>& avaliableFormats );
+    VkPresentModeKHR ChooseSwapchainPresentMode( const std::vector<VkPresentModeKHR>& availablePresentModes );
+    void CreateSwapchain();
+
 
 
 // Eextensions
@@ -96,4 +101,7 @@ private:
 
     // presentation
     VkSurfaceKHR _surface;
+
+    // swapchain
+    VkSwapchainKHR _swapchain;
 };

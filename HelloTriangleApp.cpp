@@ -30,6 +30,7 @@ void HelloTriangleApp::InitVulkan()
 
     PickPhysicalDevice();   // physical device
     CreateLogicalDevice();  // logical device
+    CreateSwapchain();      // swapchain
 }
 
 void HelloTriangleApp::CreateInstance()
@@ -88,6 +89,7 @@ void HelloTriangleApp::MainLoop()
 
 void HelloTriangleApp::Cleanup()
 {
+    vkDestroySwapchainKHR( _device, _swapchain, nullptr );  // swapchain
     vkDestroyDevice( _device, nullptr );
 
     vkDestroySurfaceKHR( _instance, _surface, nullptr );
@@ -355,7 +357,7 @@ SwapchainSupportDetails HelloTriangleApp::QuerySwapchainSupport( VkPhysicalDevic
     */
 }
 
-VkExtent2D HelloTriangleApp::ChooseExtent2D( const VkSurfaceCapabilitiesKHR& capabilities )
+VkExtent2D HelloTriangleApp::ChooseSwapchainExtent2D( const VkSurfaceCapabilitiesKHR& capabilities )
 {
     if( capabilities.currentExtent.width != UINT32_MAX )
         return capabilities.currentExtent;
@@ -374,7 +376,7 @@ VkExtent2D HelloTriangleApp::ChooseExtent2D( const VkSurfaceCapabilitiesKHR& cap
     */
 }
 
-VkSurfaceFormatKHR HelloTriangleApp::ChooseFormat( const std::vector<VkSurfaceFormatKHR>& avaliableFormats )
+VkSurfaceFormatKHR HelloTriangleApp::ChooseSwapchainFormat( const std::vector<VkSurfaceFormatKHR>& avaliableFormats )
 {
     for( const auto& avaliableFormat : avaliableFormats )
     {
@@ -392,7 +394,7 @@ VkSurfaceFormatKHR HelloTriangleApp::ChooseFormat( const std::vector<VkSurfaceFo
     */
 }
 
-VkPresentModeKHR HelloTriangleApp::ChoosePresentMode( const std::vector<VkPresentModeKHR>& availablePresentModes )
+VkPresentModeKHR HelloTriangleApp::ChooseSwapchainPresentMode( const std::vector<VkPresentModeKHR>& availablePresentModes )
 {
     for( const auto& availablePresentMode : availablePresentModes )
     {
@@ -407,6 +409,79 @@ VkPresentModeKHR HelloTriangleApp::ChoosePresentMode( const std::vector<VkPresen
     *      Swapchain -> Choosing the right settings for the swapchain -> Presentation Mode
     */
 }
+
+void HelloTriangleApp::CreateSwapchain()
+{
+    SwapchainSupportDetails details = QuerySwapchainSupport( _physicalDevice );
+    
+    VkExtent2D extent = ChooseSwapchainExtent2D( details.surfaceCapabilities );
+    VkSurfaceFormatKHR surfaceFormat = ChooseSwapchainFormat( details.formats );
+    VkPresentModeKHR presentMode = ChooseSwapchainPresentMode( details.presentModes );
+
+    uint32_t imageCount = details.surfaceCapabilities.minImageCount + 1;
+    if( details.surfaceCapabilities.maxImageCount > 0 &&
+        imageCount > details.surfaceCapabilities.maxImageCount )
+    {
+        imageCount = details.surfaceCapabilities.maxImageCount;
+    }
+
+
+    // ***Create Info***
+    VkSwapchainCreateInfoKHR swapchainInfo{};
+    swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    // surface
+    swapchainInfo.surface = _surface;
+    // min image count
+    swapchainInfo.minImageCount = imageCount;
+    // image format
+    swapchainInfo.imageFormat = surfaceFormat.format;
+    // image color space
+    swapchainInfo.imageColorSpace = surfaceFormat.colorSpace;
+    // image extent
+    swapchainInfo.imageExtent = extent;
+    // image array layers
+    swapchainInfo.imageArrayLayers = 1;
+    // image usage
+    swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    // image sharing mode
+    QueueFamilyIndices indices = FindQueueFamilies( _physicalDevice );
+    uint32_t indicesArr[] /*indices in array */ = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+    if( indicesArr[0] != indicesArr[1] )
+    {
+        swapchainInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        swapchainInfo.queueFamilyIndexCount = static_cast<uint32_t>( sizeof( indicesArr ) );
+        swapchainInfo.pQueueFamilyIndices = indicesArr;
+    }
+    else
+    {
+        swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        swapchainInfo.queueFamilyIndexCount = 0;
+        swapchainInfo.pQueueFamilyIndices = nullptr;
+    }
+    // pre transform
+    swapchainInfo.preTransform = details.surfaceCapabilities.currentTransform;
+    // composite alpha
+    swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    // presentation mode
+    swapchainInfo.presentMode = presentMode;
+    // clipped
+    swapchainInfo.clipped = VK_TRUE;
+    // old swap chain
+    swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
+    // ***************
+
+    if( vkCreateSwapchainKHR( _device, &swapchainInfo, nullptr, &_swapchain)
+        != VK_SUCCESS )
+    {
+        throw std::runtime_error( "Failed to create swapchain!" );
+    }
+
+    /*
+    *  from :
+    *      Swapchain -> Creating the swapchain
+    */
+}
+
 
 
 
