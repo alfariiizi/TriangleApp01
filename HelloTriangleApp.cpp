@@ -31,6 +31,7 @@ void HelloTriangleApp::InitVulkan()
     PickPhysicalDevice();   // physical device
     CreateLogicalDevice();  // logical device
     CreateSwapchain();      // swapchain
+    CreateImageViews();     // image views
 }
 
 void HelloTriangleApp::CreateInstance()
@@ -89,6 +90,10 @@ void HelloTriangleApp::MainLoop()
 
 void HelloTriangleApp::Cleanup()
 {
+    for( auto& imageView : _swapchainImageViews )
+    {
+        vkDestroyImageView( _device, imageView, nullptr );  // image view
+    }
     vkDestroySwapchainKHR( _device, _swapchain, nullptr );  // swapchain
     vkDestroyDevice( _device, nullptr );
 
@@ -492,6 +497,46 @@ void HelloTriangleApp::CreateSwapchain()
     *      Swapchain -> Retrieving the swapchain image
     */
 }
+
+void HelloTriangleApp::CreateImageViews()
+{
+    _swapchainImageViews.resize( _swapchainImages.size() );
+
+    for( int i = 0; i < _swapchainImageViews.size(); ++i )
+    {
+        VkImageViewCreateInfo imageViewInfo{};
+        imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        imageViewInfo.image = _swapchainImages[i];
+        imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        imageViewInfo.format = _swapchainImageFormat;
+
+        // component mapping
+        imageViewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        imageViewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        imageViewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        imageViewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    
+        // image sub-resource range
+        imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        imageViewInfo.subresourceRange.baseMipLevel = 0U;
+        imageViewInfo.subresourceRange.levelCount = 1U;
+        imageViewInfo.subresourceRange.baseArrayLayer = 0U;
+        imageViewInfo.subresourceRange.layerCount = 1U;
+
+        if( vkCreateImageView( _device, &imageViewInfo, nullptr, &_swapchainImageViews[i] )
+            != VK_SUCCESS )
+        {
+            throw std::runtime_error( "Failed to create image views!" );
+        }
+    }
+
+    /*
+    *   from :
+    *       Image Views
+    * 
+    */
+}
+
 
 
 

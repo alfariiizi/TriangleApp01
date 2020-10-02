@@ -70,6 +70,7 @@ private:
     VkSurfaceFormatKHR ChooseSwapchainFormat( const std::vector<VkSurfaceFormatKHR>& avaliableFormats );
     VkPresentModeKHR ChooseSwapchainPresentMode( const std::vector<VkPresentModeKHR>& availablePresentModes );
     void CreateSwapchain();
+    void CreateImageViews();
 
 
 
@@ -105,6 +106,7 @@ private:
     // swapchain
     VkSwapchainKHR _swapchain;
     std::vector<VkImage> _swapchainImages;  // swapchain image
+    std::vector<VkImageView> _swapchainImageViews;   // swapchain image views
     VkFormat _swapchainImageFormat;     // swapchain format
     VkExtent2D _swapchainExtent;        // swapchain extent
 };
