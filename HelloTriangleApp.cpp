@@ -32,6 +32,7 @@ void HelloTriangleApp::InitVulkan()
     CreateLogicalDevice();  // logical device
     CreateSwapchain();      // swapchain
     CreateImageViews();     // image views
+    CreateGraphicsPipeline(); // graphics pipeline
 }
 
 void HelloTriangleApp::CreateInstance()
@@ -537,6 +538,45 @@ void HelloTriangleApp::CreateImageViews()
     */
 }
 
+
+
+// --- Shader and Graphics Pipeline ---
+void HelloTriangleApp::CreateGraphicsPipeline()
+{
+    auto vertShaderCode = ReadFile("shaders/vert.spv");
+    auto fragShaderCode = ReadFile("shaders/frag.spv");
+
+/*
+ *  from :
+ *      Graphics Pipeline Introduction
+ *      Shader modules -> Loading a shader
+ * 
+ */
+}
+
+std::vector<char> HelloTriangleApp::ReadFile( const std::string& filename )
+{
+    std::ifstream in( filename, std::ios::ate | std::ios::binary );
+    
+    if( !in.is_open() )
+        throw std::runtime_error( "Failed to open spv file!" );
+    
+    size_t fileSize = static_cast<size_t>( in.tellg() ); // getting file size
+    std::vector<char> buffer( fileSize ); // this vector<char> will be used for storing the content of spv file
+
+    in.seekg( 0 );  // making file read from begining
+    in.read( buffer.data(), fileSize ); // read file and then store it at buffer
+
+    in.close();
+
+    return buffer;
+
+/*
+ *  from :
+ *      Shader modules -> Loading a shader
+ * 
+ */
+}
 
 
 

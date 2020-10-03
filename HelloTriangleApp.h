@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 
 #include <vector>
+#include <fstream>
 
 const std::vector<const char*> validationLayerExtension {
     "VK_LAYER_KHRONOS_validation"
@@ -71,6 +72,10 @@ private:
     VkPresentModeKHR ChooseSwapchainPresentMode( const std::vector<VkPresentModeKHR>& availablePresentModes );
     void CreateSwapchain();
     void CreateImageViews();
+
+// Shader and Graphics Pipeline
+    void CreateGraphicsPipeline();
+    static std::vector<char> ReadFile( const std::string& filename );
 
 
 
