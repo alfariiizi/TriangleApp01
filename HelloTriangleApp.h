@@ -76,6 +76,7 @@ private:
 // Shader and Graphics Pipeline
     void CreateGraphicsPipeline();
     static std::vector<char> ReadFile( const std::string& filename );
+    VkShaderModule CreateShaderModule( const std::vector<char>& code );
 
 
 

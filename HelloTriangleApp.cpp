@@ -546,10 +546,22 @@ void HelloTriangleApp::CreateGraphicsPipeline()
     auto vertShaderCode = ReadFile("shaders/vert.spv");
     auto fragShaderCode = ReadFile("shaders/frag.spv");
 
+    VkShaderModule vertShaderModule = CreateShaderModule( vertShaderCode );
+    VkShaderModule fragShaderModule = CreateShaderModule( fragShaderCode );
+
+    //some code here
+    
+
+
+    // destroy shader module
+    vkDestroyShaderModule( _device, vertShaderModule, nullptr );
+    vkDestroyShaderModule( _device, fragShaderModule, nullptr );
+
 /*
  *  from :
  *      Graphics Pipeline Introduction
  *      Shader modules -> Loading a shader
+ *      Shader modules -> Creating shader module
  * 
  */
 }
@@ -574,6 +586,29 @@ std::vector<char> HelloTriangleApp::ReadFile( const std::string& filename )
 /*
  *  from :
  *      Shader modules -> Loading a shader
+ * 
+ */
+}
+
+VkShaderModule HelloTriangleApp::CreateShaderModule( const std::vector<char>& code )
+{
+    VkShaderModuleCreateInfo moduleInfo{};
+    moduleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    moduleInfo.codeSize = code.size();
+    moduleInfo.pCode = reinterpret_cast<const uint32_t*>( code.data() );
+
+    VkShaderModule shaderModule;
+    if( vkCreateShaderModule( _device, &moduleInfo, nullptr, &shaderModule )
+        != VK_SUCCESS )
+    {
+        throw std::runtime_error( "Failed to create shader module!" );
+    }
+
+    return shaderModule;
+
+/*
+ *  from :
+ *      Shader modules -> Creating shader module
  * 
  */
 }
