@@ -77,7 +77,13 @@ private:
     void CreateGraphicsPipeline();
     static std::vector<char> ReadFile( const std::string& filename );
     VkShaderModule CreateShaderModule( const std::vector<char>& code );
-
+    void PopulateVertexInput( VkPipelineVertexInputStateCreateInfo& createInfo );
+    void PopulateInputAssembly( VkPipelineInputAssemblyStateCreateInfo& createInfo );
+    void PopulateViewPortScissors( VkPipelineViewportStateCreateInfo& createInfo );
+    void PopulateRasterizer( VkPipelineRasterizationStateCreateInfo& createInfo );
+    void PopulateMultisampling( VkPipelineMultisampleStateCreateInfo& createInfo );
+    void PopulateColorblending( VkPipelineColorBlendStateCreateInfo& createInfo );
+    void PopulatePipelineLayout( VkPipelineLayoutCreateInfo& createInfo );
 
 
 // Eextensions
@@ -115,4 +121,7 @@ private:
     std::vector<VkImageView> _swapchainImageViews;   // swapchain image views
     VkFormat _swapchainImageFormat;     // swapchain format
     VkExtent2D _swapchainExtent;        // swapchain extent
+
+    // graphics pipeline section
+    VkPipelineLayout _pipelineLayout;   // pipeline layout (see: fixed function)
 };

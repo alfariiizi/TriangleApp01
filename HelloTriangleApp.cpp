@@ -91,6 +91,8 @@ void HelloTriangleApp::MainLoop()
 
 void HelloTriangleApp::Cleanup()
 {
+    vkDestroyPipelineLayout( _device, _pipelineLayout, nullptr );   // pipeline layout
+
     for( auto& imageView : _swapchainImageViews )
     {
         vkDestroyImageView( _device, imageView, nullptr );  // image view
@@ -543,6 +545,9 @@ void HelloTriangleApp::CreateImageViews()
 // --- Shader and Graphics Pipeline ---
 void HelloTriangleApp::CreateGraphicsPipeline()
 {
+    // programable stage
+    // -----------------
+
     auto vertShaderCode = ReadFile("shaders/vert.spv");
     auto fragShaderCode = ReadFile("shaders/frag.spv");
 
@@ -568,6 +573,55 @@ void HelloTriangleApp::CreateGraphicsPipeline()
         vertStageInfo, fragStageInfo
     };
 
+    // -----------------
+
+
+
+    // fixed functions
+    // --------------
+
+    // vertex input
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+    PopulateVertexInput( vertexInputInfo );
+
+    // input assembly
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
+    PopulateInputAssembly( inputAssemblyInfo );
+
+    // viewports & scissors
+    VkPipelineViewportStateCreateInfo viewportInfo{};
+    PopulateViewPortScissors( viewportInfo );
+
+    // rasterizer
+    VkPipelineRasterizationStateCreateInfo rasterizerInfo{};
+    PopulateRasterizer( rasterizerInfo );
+
+    // multisampling
+    VkPipelineMultisampleStateCreateInfo multisampleInfo{};
+    PopulateMultisampling( multisampleInfo );
+
+    // depth and stencil testing (we don't need it for now)
+    // VkPipelineDepthStencilStateCreateInfo depthStencilInfo{};
+    
+    // color blend
+    VkPipelineColorBlendStateCreateInfo colorblendInfo{};
+    PopulateColorblending( colorblendInfo );
+
+    // dynamic state (we don't need it too for now)
+    //
+
+    // pipeline layout
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    PopulatePipelineLayout( pipelineLayoutInfo );
+    if( vkCreatePipelineLayout( _device, &pipelineLayoutInfo, nullptr, &_pipelineLayout )
+        != VK_SUCCESS )
+    {
+        throw std::runtime_error( "Failed to create pipeline layout!" );
+    }
+
+    // --------------
+
+
 
     // destroy shader module
     vkDestroyShaderModule( _device, vertShaderModule, nullptr );
@@ -579,6 +633,7 @@ void HelloTriangleApp::CreateGraphicsPipeline()
  *      Shader modules -> Loading a shader
  *      Shader modules -> Creating shader module
  *      Shader modules -> Shader stage creation
+ *      Fixed Functions (from vertex input, until pipeline layout)
  * 
  */
 }
@@ -626,6 +681,161 @@ VkShaderModule HelloTriangleApp::CreateShaderModule( const std::vector<char>& co
 /*
  *  from :
  *      Shader modules -> Creating shader module
+ * 
+ */
+}
+
+void HelloTriangleApp::PopulateVertexInput( VkPipelineVertexInputStateCreateInfo& createInfo )
+{
+    createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    createInfo.vertexBindingDescriptionCount = 0;
+    createInfo.pVertexBindingDescriptions = nullptr; // optional
+    createInfo.vertexAttributeDescriptionCount = 0;
+    createInfo.pVertexAttributeDescriptions = nullptr; // optional
+
+/*
+ *  from :
+ *      Fixed functions -> Vertex input
+ * 
+ */
+}
+
+void HelloTriangleApp::PopulateInputAssembly( VkPipelineInputAssemblyStateCreateInfo& createInfo )
+{
+    createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    createInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    createInfo.primitiveRestartEnable = VK_FALSE;
+
+/*
+ *  from :
+ *      Fixed functions -> Input assembly
+ * 
+ */
+}
+
+void HelloTriangleApp::PopulateViewPortScissors( VkPipelineViewportStateCreateInfo& createInfo )
+{
+    // viewport
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(_swapchainExtent.width);
+    viewport.height = static_cast<float>(_swapchainExtent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    // scissor
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = _swapchainExtent;
+
+    // viewport + scissor
+    createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    createInfo.viewportCount = 1;
+    createInfo.pViewports = &viewport;
+    createInfo.scissorCount = 1;
+    createInfo.pScissors = &scissor;
+
+/*
+ *  from :
+ *      Fixed functions -> Viewports and scissors
+ * 
+ */
+}
+
+void HelloTriangleApp::PopulateRasterizer( VkPipelineRasterizationStateCreateInfo& createInfo )
+{
+    createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    
+    // depth clamp
+    createInfo.depthClampEnable = VK_FALSE;
+    
+    // discard
+    createInfo.rasterizerDiscardEnable = VK_FALSE;
+    
+    // polygon mode
+    createInfo.polygonMode = VK_POLYGON_MODE_FILL;
+    
+    // line width
+    createInfo.lineWidth = 1.0f;
+    
+    // cull mode + front face
+    createInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+    createInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    
+    // depth bias
+    createInfo.depthBiasEnable = VK_FALSE;
+    createInfo.depthBiasConstantFactor = 0.0f;  // optional
+    createInfo.depthBiasClamp = 0.0f;   // optional
+    createInfo.depthBiasSlopeFactor = 0.0f; // optional
+
+/*
+ *  from :
+ *      Fixed functions -> Rasterizer
+ * 
+ */
+}
+
+void HelloTriangleApp::PopulateMultisampling( VkPipelineMultisampleStateCreateInfo& createInfo )
+{
+    createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    createInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    createInfo.sampleShadingEnable = VK_FALSE;
+    createInfo.minSampleShading = 1.0f; // optional
+    createInfo.pSampleMask = nullptr;   // optional
+    createInfo.alphaToCoverageEnable = VK_FALSE;    // optional
+    createInfo.alphaToOneEnable = VK_FALSE; // optional
+
+/*
+ *  from :
+ *      Fixed functions -> Multisampling
+ * 
+ */
+}
+
+void HelloTriangleApp::PopulateColorblending( VkPipelineColorBlendStateCreateInfo& createInfo )
+{
+    VkPipelineColorBlendAttachmentState attachment{};
+    attachment.blendEnable = VK_TRUE;
+    attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    attachment.colorBlendOp = VK_BLEND_OP_ADD;
+    attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+    createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    createInfo.logicOpEnable = VK_FALSE;
+    createInfo.logicOp = VK_LOGIC_OP_COPY;  // optional
+    createInfo.attachmentCount = 1;
+    createInfo.pAttachments = &attachment;
+    createInfo.blendConstants[0] = 0.0f;    // optional
+    createInfo.blendConstants[1] = 0.0f;    // optional
+    createInfo.blendConstants[2] = 0.0f;    // optional
+    createInfo.blendConstants[3] = 0.0f;    // optional
+
+/*
+ *  from :
+ *      Fixed functions -> Color blending
+ * 
+ */
+}
+
+void HelloTriangleApp::PopulatePipelineLayout( VkPipelineLayoutCreateInfo& createInfo )
+{
+    createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    createInfo.setLayoutCount = 0;  // optional
+    createInfo.pSetLayouts = nullptr;   // optional
+    createInfo.pushConstantRangeCount = 0;  // optional
+    createInfo.pPushConstantRanges = nullptr;   // optional
+
+/*
+ *  from :
+ *      Fixed functions -> Pipeline layout
  * 
  */
 }
