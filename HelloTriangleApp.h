@@ -74,6 +74,7 @@ private:
     void CreateImageViews();
 
 // Shader and Graphics Pipeline
+    void CreateRenderPass();
     void CreateGraphicsPipeline();
     static std::vector<char> ReadFile( const std::string& filename );
     VkShaderModule CreateShaderModule( const std::vector<char>& code );
@@ -123,5 +124,6 @@ private:
     VkExtent2D _swapchainExtent;        // swapchain extent
 
     // graphics pipeline section
+    VkRenderPass _renderPass;   // render pass
     VkPipelineLayout _pipelineLayout;   // pipeline layout (see: fixed function)
 };

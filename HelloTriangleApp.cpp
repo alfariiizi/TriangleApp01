@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstring>
 #include <set>
+#include <array>
 
 #ifdef _DEBUG
 const bool enableValidationLayer = true;
@@ -32,6 +33,7 @@ void HelloTriangleApp::InitVulkan()
     CreateLogicalDevice();  // logical device
     CreateSwapchain();      // swapchain
     CreateImageViews();     // image views
+    CreateRenderPass();     // render pass
     CreateGraphicsPipeline(); // graphics pipeline
 }
 
@@ -92,6 +94,7 @@ void HelloTriangleApp::MainLoop()
 void HelloTriangleApp::Cleanup()
 {
     vkDestroyPipelineLayout( _device, _pipelineLayout, nullptr );   // pipeline layout
+    vkDestroyRenderPass( _device, _renderPass, nullptr );
 
     for( auto& imageView : _swapchainImageViews )
     {
@@ -543,6 +546,54 @@ void HelloTriangleApp::CreateImageViews()
 
 
 // --- Shader and Graphics Pipeline ---
+
+void HelloTriangleApp::CreateRenderPass()
+{
+    // attachment description
+    VkAttachmentDescription colorAttachmentDesc{};
+    colorAttachmentDesc.format = _swapchainImageFormat;
+    colorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    // attachment reference { layout( location = 0 ) out vec4 outColot}
+    VkAttachmentReference colorAttachmentRef{};
+    colorAttachmentRef.attachment = 0;
+    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    // subpass description
+    VkSubpassDescription subpassDesc{};
+    subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpassDesc.colorAttachmentCount = 1;
+    subpassDesc.pColorAttachments = &colorAttachmentRef;
+
+    // render pass create info
+    VkRenderPassCreateInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = 1;
+    renderPassInfo.pAttachments = &colorAttachmentDesc;
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpassDesc;
+
+    if( vkCreateRenderPass( _device, &renderPassInfo, nullptr, &_renderPass)
+        != VK_SUCCESS )
+    {
+        throw std::runtime_error( "Failed to create render pass!" );
+    }
+/*
+ *  from :
+ *      Render passes -> Attachment desciption
+ *      Render passes -> Subpasses and attachment references
+ *      Render passes -> Render pass
+ */
+
+
+}
+
 void HelloTriangleApp::CreateGraphicsPipeline()
 {
     // programable stage
