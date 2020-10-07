@@ -78,13 +78,13 @@ private:
     void CreateGraphicsPipeline();
     static std::vector<char> ReadFile( const std::string& filename );
     VkShaderModule CreateShaderModule( const std::vector<char>& code );
-    void PopulateVertexInput( VkPipelineVertexInputStateCreateInfo& createInfo );
-    void PopulateInputAssembly( VkPipelineInputAssemblyStateCreateInfo& createInfo );
-    void PopulateViewPortScissors( VkPipelineViewportStateCreateInfo& createInfo );
-    void PopulateRasterizer( VkPipelineRasterizationStateCreateInfo& createInfo );
-    void PopulateMultisampling( VkPipelineMultisampleStateCreateInfo& createInfo );
-    void PopulateColorblending( VkPipelineColorBlendStateCreateInfo& createInfo );
-    void PopulatePipelineLayout( VkPipelineLayoutCreateInfo& createInfo );
+    VkPipelineVertexInputStateCreateInfo GetVertexInput();
+    VkPipelineInputAssemblyStateCreateInfo GetInputAssembly();
+    VkPipelineViewportStateCreateInfo GetViewPortScissors( VkViewport& viewport, VkRect2D& scissor );
+    VkPipelineRasterizationStateCreateInfo GetRasterizer();
+    VkPipelineMultisampleStateCreateInfo GetMultisampling();
+    VkPipelineColorBlendStateCreateInfo GetColorblending( VkPipelineColorBlendAttachmentState& attachment );
+    VkPipelineLayoutCreateInfo GetPipelineLayout();
 
 
 // Eextensions
@@ -126,4 +126,5 @@ private:
     // graphics pipeline section
     VkRenderPass _renderPass;   // render pass
     VkPipelineLayout _pipelineLayout;   // pipeline layout (see: fixed function)
+    VkPipeline _graphicsPipeline;   // graphics pipeline
 };
