@@ -137,11 +137,7 @@ void HelloTriangleApp::SetupDebugMessenger()
     VkDebugUtilsMessengerCreateInfoEXT messengerInfo;
     PopulateDebugUtilsCreateInfo( messengerInfo );
 
-    if( CreateDebugUtilsMessengerEXT( _instance, &messengerInfo, nullptr, &_debugMessenger ) 
-        != VK_SUCCESS )
-    {
-        throw std::runtime_error( "Failed to create debug messenger!" );
-    }
+    ErrorCheck( CreateDebugUtilsMessengerEXT( _instance, &messengerInfo, nullptr, &_debugMessenger ), "create debug messenger" );
 }
 
 VkResult HelloTriangleApp::CreateDebugUtilsMessengerEXT(
@@ -178,12 +174,7 @@ void HelloTriangleApp::DestroyDebugUtilsMessengerEXT(
 // --- Surface ---
 void HelloTriangleApp::CreateSurface()
 {
-    if( glfwCreateWindowSurface( _instance, _window, nullptr, &_surface)
-        !=
-        VK_SUCCESS )
-    {
-        throw std::runtime_error( "Failed to create surface!" );
-    }
+    ErrorCheck( glfwCreateWindowSurface( _instance, _window, nullptr, &_surface), "create surface");
 }
 
 
@@ -318,12 +309,7 @@ void HelloTriangleApp::CreateLogicalDevice()
     deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
     
 
-    if( vkCreateDevice( _physicalDevice, &deviceInfo, nullptr, &_device )
-        !=
-        VK_SUCCESS )
-    {
-        throw std::runtime_error( "Failed to create logical device!" );
-    }
+    ErrorCheck( vkCreateDevice( _physicalDevice, &deviceInfo, nullptr, &_device ), "create logical device" );
 
     // create queue
     vkGetDeviceQueue( _device, indices.graphicsFamily.value(), 0, &_graphicsQueue );
@@ -482,11 +468,7 @@ void HelloTriangleApp::CreateSwapchain()
     swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
     // ***************
 
-    if( vkCreateSwapchainKHR( _device, &swapchainInfo, nullptr, &_swapchain)
-        != VK_SUCCESS )
-    {
-        throw std::runtime_error( "Failed to create swapchain!" );
-    }
+    ErrorCheck( vkCreateSwapchainKHR( _device, &swapchainInfo, nullptr, &_swapchain), "create swapchain");
 
     // retrive swapchain image
     vkGetSwapchainImagesKHR( _device, _swapchain, &imageCount /*we can re-use imageCount variable*/, nullptr );
@@ -580,19 +562,13 @@ void HelloTriangleApp::CreateRenderPass()
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpassDesc;
 
-    if( vkCreateRenderPass( _device, &renderPassInfo, nullptr, &_renderPass)
-        != VK_SUCCESS )
-    {
-        throw std::runtime_error( "Failed to create render pass!" );
-    }
+    ErrorCheck( vkCreateRenderPass( _device, &renderPassInfo, nullptr, &_renderPass), "create render pass");
 /*
  *  from :
  *      Render passes -> Attachment desciption
  *      Render passes -> Subpasses and attachment references
  *      Render passes -> Render pass
  */
-
-
 }
 
 void HelloTriangleApp::CreateGraphicsPipeline()
@@ -642,8 +618,8 @@ void HelloTriangleApp::CreateGraphicsPipeline()
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo = GetInputAssembly();
     
     // viewports & scissors
-    VkViewport viewport{};
-    VkRect2D scissor{};
+    VkViewport viewport = GetViewport();
+    VkRect2D scissor = GetScissor();
     VkPipelineViewportStateCreateInfo viewportInfo = GetViewPortScissors( viewport, scissor );
 
     // rasterizer
@@ -653,8 +629,8 @@ void HelloTriangleApp::CreateGraphicsPipeline()
     VkPipelineMultisampleStateCreateInfo multisampleInfo = GetMultisampling();
     
     // color blend
-    VkPipelineColorBlendAttachmentState attachment{};
-    VkPipelineColorBlendStateCreateInfo colorblendInfo = GetColorblending( attachment );
+    VkPipelineColorBlendAttachmentState colorblendAttachment = GetColorBlendAttachment();
+    VkPipelineColorBlendStateCreateInfo colorblendInfo = GetColorblending( colorblendAttachment );
 
     // depth and stencil testing (we don't need it for now)
     // 
@@ -664,11 +640,7 @@ void HelloTriangleApp::CreateGraphicsPipeline()
 
     // pipeline layout
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = GetPipelineLayout();
-    if( vkCreatePipelineLayout( _device, &pipelineLayoutInfo, nullptr, &_pipelineLayout )
-        != VK_SUCCESS )
-    {
-        throw std::runtime_error( "Failed to create pipeline layout!" );
-    }
+    ErrorCheck( vkCreatePipelineLayout( _device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ), "create pipeline layout" );
 
     // --------------
 
@@ -693,11 +665,7 @@ void HelloTriangleApp::CreateGraphicsPipeline()
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;    // because there are none base pipeline we want to use
 
-    if( vkCreateGraphicsPipelines( _device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_graphicsPipeline)
-        != VK_SUCCESS )
-    {
-        throw std::runtime_error( "Failed to create graphics pipeline!" );
-    }
+    ErrorCheck( vkCreateGraphicsPipelines( _device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_graphicsPipeline), "create graphics pipeline" );
 
     // destroy shader module
     vkDestroyShaderModule( _device, vertShaderModule, nullptr );
@@ -746,11 +714,7 @@ VkShaderModule HelloTriangleApp::CreateShaderModule( const std::vector<char>& co
     moduleInfo.pCode = reinterpret_cast<const uint32_t*>( code.data() );
 
     VkShaderModule shaderModule;
-    if( vkCreateShaderModule( _device, &moduleInfo, nullptr, &shaderModule )
-        != VK_SUCCESS )
-    {
-        throw std::runtime_error( "Failed to create shader module!" );
-    }
+    ErrorCheck( vkCreateShaderModule( _device, &moduleInfo, nullptr, &shaderModule ), " create shader module" );
 
     return shaderModule;
 
@@ -797,27 +761,13 @@ VkPipelineInputAssemblyStateCreateInfo HelloTriangleApp::GetInputAssembly()
 
 VkPipelineViewportStateCreateInfo HelloTriangleApp::GetViewPortScissors( VkViewport& viewport, VkRect2D& scissor )
 {
-    // viewport
-    viewport = {};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = float(_swapchainExtent.width);
-    viewport.height = float(_swapchainExtent.height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    // scissor
-    scissor = {};
-    scissor.offset = { 0, 0 };
-    scissor.extent = _swapchainExtent;
-
     // viewport + scissor
     VkPipelineViewportStateCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    createInfo.viewportCount = 1;
-    createInfo.pViewports = &viewport;
-    createInfo.scissorCount = 1;
-    createInfo.pScissors = &scissor;
+    createInfo.viewportCount = 1;       // jumlah viewport
+    createInfo.pViewports = &viewport;  // viewport
+    createInfo.scissorCount = 1;        // jumlah scissor
+    createInfo.pScissors = &scissor;    // scissor
 
     return createInfo;
 /*
@@ -884,23 +834,12 @@ VkPipelineMultisampleStateCreateInfo HelloTriangleApp::GetMultisampling()
 
 VkPipelineColorBlendStateCreateInfo HelloTriangleApp::GetColorblending( VkPipelineColorBlendAttachmentState& attachment )
 {
-    attachment = {};
-    attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-        VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    attachment.blendEnable = VK_FALSE;
-    attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-    attachment.colorBlendOp = VK_BLEND_OP_ADD;
-    attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    attachment.alphaBlendOp = VK_BLEND_OP_ADD;
-
     VkPipelineColorBlendStateCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     createInfo.logicOpEnable = VK_FALSE;
     createInfo.logicOp = VK_LOGIC_OP_COPY;  // optional
-    createInfo.attachmentCount = 1;
-    createInfo.pAttachments = &attachment;
+    createInfo.attachmentCount = 1;         // jumlah attachment
+    createInfo.pAttachments = &attachment;  // attachment
     createInfo.blendConstants[0] = 0.0f;    // optional
     createInfo.blendConstants[1] = 0.0f;    // optional
     createInfo.blendConstants[2] = 0.0f;    // optional
@@ -929,6 +868,44 @@ VkPipelineLayoutCreateInfo HelloTriangleApp::GetPipelineLayout()
  *      Fixed functions -> Pipeline layout
  * 
  */
+}
+
+VkViewport HelloTriangleApp::GetViewport() const
+{
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = float(_swapchainExtent.width);
+    viewport.height = float(_swapchainExtent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    return viewport;
+}
+
+VkRect2D HelloTriangleApp::GetScissor() const
+{
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = _swapchainExtent;
+
+    return scissor;
+}
+
+VkPipelineColorBlendAttachmentState HelloTriangleApp::GetColorBlendAttachment() const
+{
+    VkPipelineColorBlendAttachmentState colorAttachment{};
+    colorAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+        VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorAttachment.blendEnable = VK_FALSE;
+    colorAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    colorAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    colorAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+    colorAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    colorAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    colorAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+    return colorAttachment;
 }
 
 
@@ -1027,4 +1004,14 @@ void HelloTriangleApp::PopulateDebugUtilsCreateInfo( VkDebugUtilsMessengerCreate
         VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     createInfo.pfnUserCallback = DebugCallback;
     createInfo.pUserData = nullptr; //optional
+}
+
+void HelloTriangleApp::ErrorCheck( VkResult result, const char* msg ) const
+{
+    std::string str = "Failed to ";
+    str.append( msg );
+    if( result != VK_SUCCESS )
+    {
+        throw std::runtime_error( str );
+    }
 }

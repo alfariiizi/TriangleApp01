@@ -86,6 +86,11 @@ private:
     VkPipelineColorBlendStateCreateInfo GetColorblending( VkPipelineColorBlendAttachmentState& attachment );
     VkPipelineLayoutCreateInfo GetPipelineLayout();
 
+    // Getter Function for Fixed Function in Graphics Pipeline
+    VkViewport GetViewport() const;
+    VkRect2D GetScissor() const;
+    VkPipelineColorBlendAttachmentState GetColorBlendAttachment() const;
+
 
 // Eextensions
     std::vector<const char*> GetRequiredExtensions();
@@ -96,6 +101,8 @@ private:
     void PopulateApplicationInfo( VkApplicationInfo& appInfo );
     void PopulateDebugUtilsCreateInfo( VkDebugUtilsMessengerCreateInfoEXT& createInfo );
 
+// Error Check
+    void ErrorCheck( VkResult result, const char* msg ) const;
 
 
 public:
