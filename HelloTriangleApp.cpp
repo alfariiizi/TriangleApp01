@@ -35,6 +35,9 @@ void HelloTriangleApp::InitVulkan()
     CreateImageViews();     // image views
     CreateRenderPass();     // render pass
     CreateGraphicsPipeline(); // graphics pipeline
+    CreateFramebuffers();   // framebuffers (swapchain framebuffer images)
+    CreateCommandPool();    // command pool
+    CreateCommandBuffers(); // command buffers
 }
 
 void HelloTriangleApp::CreateInstance()
@@ -93,6 +96,8 @@ void HelloTriangleApp::MainLoop()
 
 void HelloTriangleApp::Cleanup()
 {
+    vkDestroyCommandPool( _device, _commandPool, nullptr ); // command pool & command buffers
+
     for( auto& framebuffer : _swapchainFramebuffers )
     {
         vkDestroyFramebuffer( _device, framebuffer, nullptr );
@@ -956,12 +961,12 @@ bool HelloTriangleApp::CheckDeviceExtensionSupport( VkPhysicalDevice physicalDev
 
 // --- command buffer and frame buffer ---
 
-void HelloTriangleApp::CreateFramebuffer()
+void HelloTriangleApp::CreateFramebuffers()
 {
-    const int size_images = _swapchainImageViews.size();
+    const size_t size_images = _swapchainImageViews.size();
     _swapchainFramebuffers.resize( size_images );
 
-    for( int i = 0; i < size_images; ++i )
+    for( size_t i = 0; i < size_images; ++i )
     {
         std::array<VkImageView, 1> attachment = {
             _swapchainImageViews[i]
@@ -971,6 +976,7 @@ void HelloTriangleApp::CreateFramebuffer()
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = _renderPass;
         framebufferInfo.attachmentCount = static_cast<uint32_t>( attachment.size() );
+        framebufferInfo.pAttachments = attachment.data();
         framebufferInfo.width = _swapchainExtent.width;
         framebufferInfo.height = _swapchainExtent.height;
         framebufferInfo.layers = 1;
@@ -978,6 +984,70 @@ void HelloTriangleApp::CreateFramebuffer()
         ErrorCheck( vkCreateFramebuffer( _device, &framebufferInfo, nullptr, &_swapchainFramebuffers[i] ), "create framebuffer" );
     }
 }
+
+void HelloTriangleApp::CreateCommandPool()
+{
+    QueueFamilyIndices queueFamilyIndices = FindQueueFamilies( _physicalDevice );
+
+    VkCommandPoolCreateInfo commandPoolInfo{};
+    commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    commandPoolInfo.flags = 0;  // optional
+    commandPoolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+
+    ErrorCheck( vkCreateCommandPool( _device, &commandPoolInfo, nullptr, &_commandPool), "create command pool" );
+
+}
+
+void HelloTriangleApp::CreateCommandBuffers()
+{   
+    _commandBuffers.resize( _swapchainFramebuffers.size() );
+    const size_t size_commandBuffers = _commandBuffers.size();
+    
+    VkCommandBufferAllocateInfo cmdAllocInfo{};
+    cmdAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    cmdAllocInfo.commandPool = _commandPool;
+    cmdAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    cmdAllocInfo.commandBufferCount = static_cast<uint32_t>( size_commandBuffers );
+
+    ErrorCheck( vkAllocateCommandBuffers( _device, &cmdAllocInfo, _commandBuffers.data() ), "allocate command buffers" );
+
+    for( size_t i = 0; i < size_commandBuffers; ++i )
+    {
+        // --- begin ---
+        VkCommandBufferBeginInfo cmdBuf_beginInfo{};
+        cmdBuf_beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        cmdBuf_beginInfo.flags = 0;  // optional
+        cmdBuf_beginInfo.pInheritanceInfo = nullptr;    // optional
+
+        ErrorCheck( vkBeginCommandBuffer( _commandBuffers[i], &cmdBuf_beginInfo ), "begin recording command buffer" );
+        // -------------
+
+        // --- render pass ---
+        VkRenderPassBeginInfo renderpassBeginInfo{};
+        renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderpassBeginInfo.renderPass = _renderPass;
+        renderpassBeginInfo.framebuffer = _swapchainFramebuffers[i];
+        renderpassBeginInfo.renderArea.offset = {0, 0};
+        renderpassBeginInfo.renderArea.extent = _swapchainExtent;
+        VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f }; // solid black
+        renderpassBeginInfo.clearValueCount = 1;
+        renderpassBeginInfo.pClearValues = &clearColor;
+        vkCmdBeginRenderPass( _commandBuffers[i], &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+        // --- basic draw command ---
+        // bind pipeline
+        vkCmdBindPipeline( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipeline );
+        // draw
+        vkCmdDraw( _commandBuffers[i], 3, 1, 0, 0 );
+        // --------------------------
+
+        // --- Finish recording ---
+        vkCmdEndRenderPass( _commandBuffers[i] );
+        ErrorCheck( vkEndCommandBuffer( _commandBuffers[i] ), "end recording command buffer" );
+    }
+
+}
+
 
 
 

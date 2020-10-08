@@ -93,8 +93,9 @@ private:
 
 
 // command buffer and frame buffer
-    void CreateFramebuffer();
-
+    void CreateFramebuffers();
+    void CreateCommandPool();
+    void CreateCommandBuffers();
 
 
 // Eextensions
@@ -142,4 +143,6 @@ private:
 
     // command buffer and frame buffer section
     std::vector<VkFramebuffer> _swapchainFramebuffers;
+    VkCommandPool _commandPool;
+    std::vector<VkCommandBuffer> _commandBuffers;
 };
