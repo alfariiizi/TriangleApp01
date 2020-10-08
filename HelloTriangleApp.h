@@ -92,6 +92,11 @@ private:
     VkPipelineColorBlendAttachmentState GetColorBlendAttachment() const;
 
 
+// command buffer and frame buffer
+    void CreateFramebuffer();
+
+
+
 // Eextensions
     std::vector<const char*> GetRequiredExtensions();
     bool CheckDeviceExtensionSupport( VkPhysicalDevice physicalDevice );
@@ -134,4 +139,7 @@ private:
     VkRenderPass _renderPass;   // render pass
     VkPipelineLayout _pipelineLayout;   // pipeline layout (see: fixed function)
     VkPipeline _graphicsPipeline;   // graphics pipeline
+
+    // command buffer and frame buffer section
+    std::vector<VkFramebuffer> _swapchainFramebuffers;
 };

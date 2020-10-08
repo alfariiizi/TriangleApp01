@@ -93,6 +93,11 @@ void HelloTriangleApp::MainLoop()
 
 void HelloTriangleApp::Cleanup()
 {
+    for( auto& framebuffer : _swapchainFramebuffers )
+    {
+        vkDestroyFramebuffer( _device, framebuffer, nullptr );
+    }
+
     vkDestroyPipeline( _device, _graphicsPipeline, nullptr );
     vkDestroyPipelineLayout( _device, _pipelineLayout, nullptr );   // pipeline layout
     vkDestroyRenderPass( _device, _renderPass, nullptr );
@@ -946,6 +951,32 @@ bool HelloTriangleApp::CheckDeviceExtensionSupport( VkPhysicalDevice physicalDev
     *   Swapchain -> Checking for swapchain support
     * 
     */
+}
+
+
+// --- command buffer and frame buffer ---
+
+void HelloTriangleApp::CreateFramebuffer()
+{
+    const int size_images = _swapchainImageViews.size();
+    _swapchainFramebuffers.resize( size_images );
+
+    for( int i = 0; i < size_images; ++i )
+    {
+        std::array<VkImageView, 1> attachment = {
+            _swapchainImageViews[i]
+        };
+
+        VkFramebufferCreateInfo framebufferInfo{};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = _renderPass;
+        framebufferInfo.attachmentCount = static_cast<uint32_t>( attachment.size() );
+        framebufferInfo.width = _swapchainExtent.width;
+        framebufferInfo.height = _swapchainExtent.height;
+        framebufferInfo.layers = 1;
+
+        ErrorCheck( vkCreateFramebuffer( _device, &framebufferInfo, nullptr, &_swapchainFramebuffers[i] ), "create framebuffer" );
+    }
 }
 
 
