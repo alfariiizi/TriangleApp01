@@ -100,7 +100,7 @@ private:
 
 // rendering and presentation
     void DrawFrame();
-    void CreateSemaphores();
+    void CreateSyncObjects();
 
 // Eextensions
     std::vector<const char*> GetRequiredExtensions();
@@ -118,6 +118,9 @@ private:
 public:
     static constexpr int ScreenWidth = 800;
     static constexpr int ScreenHeight = 600;
+    static constexpr int MaxFrameInFlight = 2;
+private:
+    size_t currentFrame = 0;   // this variable is for keep tracking the frame in flight
 
 private:
     GLFWwindow* _window = nullptr;
@@ -151,6 +154,8 @@ private:
     std::vector<VkCommandBuffer> _commandBuffers;
 
     // semaphores
-    VkSemaphore _imageAvailableSemaphore;
-    VkSemaphore _renderFinishedSemaphore;
+    std::vector<VkSemaphore> _imageAvailableSemaphore;
+    std::vector<VkSemaphore> _renderFinishedSemaphore;
+    // fences
+    std::vector<VkFence> _inFlightFences;
 };

@@ -38,7 +38,7 @@ void HelloTriangleApp::InitVulkan()
     CreateFramebuffers();   // framebuffers (swapchain framebuffer images)
     CreateCommandPool();    // command pool
     CreateCommandBuffers(); // command buffers
-    CreateSemaphores();     // semaphores
+    CreateSyncObjects();     // semaphores and fences
 }
 
 void HelloTriangleApp::CreateInstance()
@@ -108,8 +108,12 @@ void HelloTriangleApp::MainLoop()
 
 void HelloTriangleApp::Cleanup()
 {
-    vkDestroySemaphore( _device, _renderFinishedSemaphore, nullptr );   // render finished semaphore
-    vkDestroySemaphore( _device, _imageAvailableSemaphore, nullptr );   // image available semaphore
+    for( size_t i = 0; i < HelloTriangleApp::MaxFrameInFlight; ++i )
+    {
+        vkDestroySemaphore( _device, _renderFinishedSemaphore[i], nullptr );   // render finished semaphore
+        vkDestroySemaphore( _device, _imageAvailableSemaphore[i], nullptr );   // image available semaphore
+        vkDestroyFence( _device, _inFlightFences[i], nullptr ); // in fligh fence
+    }
 
     vkDestroyCommandPool( _device, _commandPool, nullptr ); // command pool & command buffers
 
@@ -143,15 +147,17 @@ void HelloTriangleApp::Cleanup()
 
 void HelloTriangleApp::DrawFrame()
 {
-    uint32_t imageIndex;
-    vkAcquireNextImageKHR( _device, _swapchain, UINT64_MAX, _imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex );
+    vkWaitForFences( _device, 1, &_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX );
+    vkResetFences( _device, 1, &_inFlightFences[currentFrame] );
 
+    uint32_t imageIndex;
+    vkAcquireNextImageKHR( _device, _swapchain, UINT64_MAX, _imageAvailableSemaphore[currentFrame], VK_NULL_HANDLE, &imageIndex );
 
     // --- submitting the command buffer ---
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     
-    std::array<VkSemaphore, 1> waitSemaphores = { _imageAvailableSemaphore };
+    std::array<VkSemaphore, 1> waitSemaphores = { _imageAvailableSemaphore[currentFrame] };
     std::array<VkPipelineStageFlags, 1> waitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     submitInfo.waitSemaphoreCount = static_cast<uint32_t>( waitSemaphores.size() );
     submitInfo.pWaitSemaphores = waitSemaphores.data();
@@ -160,11 +166,11 @@ void HelloTriangleApp::DrawFrame()
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &_commandBuffers[imageIndex];
 
-    std::array<VkSemaphore, 1> signalSemaphores = { _renderFinishedSemaphore };
+    std::array<VkSemaphore, 1> signalSemaphores = { _renderFinishedSemaphore[currentFrame] };
     submitInfo.signalSemaphoreCount = static_cast<uint32_t>( signalSemaphores.size() );
     submitInfo.pSignalSemaphores = signalSemaphores.data();
 
-    ErrorCheck( vkQueueSubmit( _graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE ), "submitting command buffer queue" );
+    ErrorCheck( vkQueueSubmit( _graphicsQueue, 1, &submitInfo, _inFlightFences[currentFrame] ), "submitting command buffer queue" );
     // --------------------------------------
 
 
@@ -181,8 +187,10 @@ void HelloTriangleApp::DrawFrame()
     presentInfo.pImageIndices = &imageIndex;
     presentInfo.pResults = nullptr;
 
-    ErrorCheck( vkQueuePresentKHR( _graphicsQueue, &presentInfo ), "submitting the result back to swapchain to have it eventually show up to the screen" );
+    ErrorCheck( vkQueuePresentKHR( _presentQueue, &presentInfo ), "submitting the result back to swapchain to have it eventually show up to the screen" );
     // --------------------
+
+    currentFrame = ++currentFrame % HelloTriangleApp::MaxFrameInFlight;
 
 /*
  *  from :
@@ -194,13 +202,31 @@ void HelloTriangleApp::DrawFrame()
 */
 }
 
-void HelloTriangleApp::CreateSemaphores()
+void HelloTriangleApp::CreateSyncObjects()
 {
+    // semaphore create info
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    ErrorCheck( vkCreateSemaphore( _device, &semaphoreInfo, nullptr, &_imageAvailableSemaphore), "create semaphores" );
-    ErrorCheck( vkCreateSemaphore( _device, &semaphoreInfo, nullptr, &_renderFinishedSemaphore), "create renderFinished semaphore" );
 
+    // fence create info
+    VkFenceCreateInfo fenceInfo{};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    // semaphore resize
+    _imageAvailableSemaphore.resize( HelloTriangleApp::MaxFrameInFlight );
+    _renderFinishedSemaphore.resize( HelloTriangleApp::MaxFrameInFlight );
+    // fence resize
+    _inFlightFences.resize( HelloTriangleApp::MaxFrameInFlight );
+
+    for( size_t i = 0; i < HelloTriangleApp::MaxFrameInFlight; ++i )
+    {
+        ErrorCheck( vkCreateSemaphore( _device, &semaphoreInfo, nullptr, &_imageAvailableSemaphore[i]), "create image available semaphores" );
+        ErrorCheck( vkCreateSemaphore( _device, &semaphoreInfo, nullptr, &_renderFinishedSemaphore[i]), "create render finished semaphore" );
+        ErrorCheck( vkCreateFence( _device, &fenceInfo, nullptr, &_inFlightFences[i] ), "Creating fences" );
+    }
+    
+// TODO
 /*
  *  from :
  *      Rendering and presentation -> Semaphores
