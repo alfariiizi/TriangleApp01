@@ -38,6 +38,7 @@ void HelloTriangleApp::InitVulkan()
     CreateFramebuffers();   // framebuffers (swapchain framebuffer images)
     CreateCommandPool();    // command pool
     CreateCommandBuffers(); // command buffers
+    CreateSemaphores();     // semaphores
 }
 
 void HelloTriangleApp::CreateInstance()
@@ -91,11 +92,25 @@ void HelloTriangleApp::MainLoop()
     while( !glfwWindowShouldClose( _window ) )
     {
         glfwPollEvents();
+        DrawFrame();
     }
+
+    vkQueueWaitIdle( _graphicsQueue );
+    vkDeviceWaitIdle( _device );
+
+/*
+ *  from :
+ *      Rendering and presentation -> Setup
+ *      Rendering and presentation -> Presentation
+ * 
+*/
 }
 
 void HelloTriangleApp::Cleanup()
 {
+    vkDestroySemaphore( _device, _renderFinishedSemaphore, nullptr );   // render finished semaphore
+    vkDestroySemaphore( _device, _imageAvailableSemaphore, nullptr );   // image available semaphore
+
     vkDestroyCommandPool( _device, _commandPool, nullptr ); // command pool & command buffers
 
     for( auto& framebuffer : _swapchainFramebuffers )
@@ -125,6 +140,73 @@ void HelloTriangleApp::Cleanup()
     glfwTerminate();
 }
 
+
+void HelloTriangleApp::DrawFrame()
+{
+    uint32_t imageIndex;
+    vkAcquireNextImageKHR( _device, _swapchain, UINT64_MAX, _imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex );
+
+
+    // --- submitting the command buffer ---
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    
+    std::array<VkSemaphore, 1> waitSemaphores = { _imageAvailableSemaphore };
+    std::array<VkPipelineStageFlags, 1> waitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    submitInfo.waitSemaphoreCount = static_cast<uint32_t>( waitSemaphores.size() );
+    submitInfo.pWaitSemaphores = waitSemaphores.data();
+    submitInfo.pWaitDstStageMask = waitStages.data();
+
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &_commandBuffers[imageIndex];
+
+    std::array<VkSemaphore, 1> signalSemaphores = { _renderFinishedSemaphore };
+    submitInfo.signalSemaphoreCount = static_cast<uint32_t>( signalSemaphores.size() );
+    submitInfo.pSignalSemaphores = signalSemaphores.data();
+
+    ErrorCheck( vkQueueSubmit( _graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE ), "submitting command buffer queue" );
+    // --------------------------------------
+
+
+    // --- presentation ---
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = static_cast<uint32_t>( signalSemaphores.size() );
+    presentInfo.pWaitSemaphores = signalSemaphores.data();
+
+    std::array<VkSwapchainKHR, 1> swapchains = { _swapchain };
+    presentInfo.swapchainCount = static_cast<uint32_t>( swapchains.size() );
+    presentInfo.pSwapchains = swapchains.data();
+
+    presentInfo.pImageIndices = &imageIndex;
+    presentInfo.pResults = nullptr;
+
+    ErrorCheck( vkQueuePresentKHR( _graphicsQueue, &presentInfo ), "submitting the result back to swapchain to have it eventually show up to the screen" );
+    // --------------------
+
+/*
+ *  from :
+ *      Rendering and presentation -> Setup & Synchronization
+ *      Rendering and presentation -> Acquiring an image from the swapchain
+ *      Rendering and presentation -> Submitting the command buffer
+ *      Rendering and presentation -> Presentation
+ * 
+*/
+}
+
+void HelloTriangleApp::CreateSemaphores()
+{
+    VkSemaphoreCreateInfo semaphoreInfo{};
+    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    ErrorCheck( vkCreateSemaphore( _device, &semaphoreInfo, nullptr, &_imageAvailableSemaphore), "create semaphores" );
+    ErrorCheck( vkCreateSemaphore( _device, &semaphoreInfo, nullptr, &_renderFinishedSemaphore), "create renderFinished semaphore" );
+
+/*
+ *  from :
+ *      Rendering and presentation -> Semaphores
+ * 
+*/
+}
 
 
 // --- Debug Messenger ---
@@ -564,6 +646,15 @@ void HelloTriangleApp::CreateRenderPass()
     subpassDesc.colorAttachmentCount = 1;
     subpassDesc.pColorAttachments = &colorAttachmentRef;
 
+    // dependency
+    VkSubpassDependency dependency{};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
     // render pass create info
     VkRenderPassCreateInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -571,6 +662,8 @@ void HelloTriangleApp::CreateRenderPass()
     renderPassInfo.pAttachments = &colorAttachmentDesc;
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpassDesc;
+    renderPassInfo.dependencyCount = 1;
+    renderPassInfo.pDependencies = &dependency;
 
     ErrorCheck( vkCreateRenderPass( _device, &renderPassInfo, nullptr, &_renderPass), "create render pass");
 /*
@@ -578,6 +671,7 @@ void HelloTriangleApp::CreateRenderPass()
  *      Render passes -> Attachment desciption
  *      Render passes -> Subpasses and attachment references
  *      Render passes -> Render pass
+ *      Render and presentation -> Subpass dependencies
  */
 }
 
@@ -1016,7 +1110,7 @@ void HelloTriangleApp::CreateCommandBuffers()
         // --- begin ---
         VkCommandBufferBeginInfo cmdBuf_beginInfo{};
         cmdBuf_beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        cmdBuf_beginInfo.flags = 0;  // optional
+        cmdBuf_beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;  // before this it's assgin to zero, but someone in the chat said that it can fixed issue in rendering & presentation
         cmdBuf_beginInfo.pInheritanceInfo = nullptr;    // optional
 
         ErrorCheck( vkBeginCommandBuffer( _commandBuffers[i], &cmdBuf_beginInfo ), "begin recording command buffer" );

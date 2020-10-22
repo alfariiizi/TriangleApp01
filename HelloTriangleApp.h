@@ -98,6 +98,10 @@ private:
     void CreateCommandBuffers();
 
 
+// rendering and presentation
+    void DrawFrame();
+    void CreateSemaphores();
+
 // Eextensions
     std::vector<const char*> GetRequiredExtensions();
     bool CheckDeviceExtensionSupport( VkPhysicalDevice physicalDevice );
@@ -145,4 +149,8 @@ private:
     std::vector<VkFramebuffer> _swapchainFramebuffers;
     VkCommandPool _commandPool;
     std::vector<VkCommandBuffer> _commandBuffers;
+
+    // semaphores
+    VkSemaphore _imageAvailableSemaphore;
+    VkSemaphore _renderFinishedSemaphore;
 };
