@@ -77,7 +77,12 @@ private:
     void CreateGraphicsPipeline();
     static std::vector<char> ReadFile( const std::string& filename );
     VkShaderModule CreateShaderModule( const std::vector<char>& code );
-    VkPipelineVertexInputStateCreateInfo GetVertexInput();
+    VkPipelineVertexInputStateCreateInfo GetVertexInput(
+        VkVertexInputBindingDescription& bindDesc, 
+        std::vector<VkVertexInputAttributeDescription>& attDesc
+        );
+    VkVertexInputBindingDescription GetBindingDescription();
+    std::vector<VkVertexInputAttributeDescription> GetAttributeDescription();
     VkPipelineInputAssemblyStateCreateInfo GetInputAssembly();
     VkPipelineViewportStateCreateInfo GetViewPortScissors( VkViewport& viewport, VkRect2D& scissor );
     VkPipelineRasterizationStateCreateInfo GetRasterizer();

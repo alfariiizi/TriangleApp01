@@ -198,6 +198,10 @@ void HelloTriangleApp::DrawFrame()
  *      Rendering and presentation -> Acquiring an image from the swapchain
  *      Rendering and presentation -> Submitting the command buffer
  *      Rendering and presentation -> Presentation
+ *      Rendering and presentation -> In-Flight (almost done)
+ * 
+ *  from udemy :
+ *      Drawing and Synchronization
  * 
 */
 }
@@ -230,6 +234,10 @@ void HelloTriangleApp::CreateSyncObjects()
 /*
  *  from :
  *      Rendering and presentation -> Semaphores
+ *      Rendering and presentation -> In-Flight (almost done)
+ * 
+ *  from udemy :
+ *      Drawing and Synchronization
  * 
 */
 }
@@ -742,7 +750,9 @@ void HelloTriangleApp::CreateGraphicsPipeline()
     // --------------
 
     // vertex input
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo = GetVertexInput();
+    auto bindDesc = GetBindingDescription();
+    auto attDesc = GetAttributeDescription();
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo = GetVertexInput( bindDesc, attDesc );
 
     // input assembly
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo = GetInputAssembly();
@@ -809,6 +819,10 @@ void HelloTriangleApp::CreateGraphicsPipeline()
  *      Shader modules -> Shader stage creation
  *      Fixed Functions (from vertex input, until pipeline layout)
  * 
+ * 
+ *  from udemy :
+ *      vertex input
+ * 
  */
 }
 
@@ -855,14 +869,17 @@ VkShaderModule HelloTriangleApp::CreateShaderModule( const std::vector<char>& co
  */
 }
 
-VkPipelineVertexInputStateCreateInfo HelloTriangleApp::GetVertexInput()
+VkPipelineVertexInputStateCreateInfo HelloTriangleApp::GetVertexInput(
+    VkVertexInputBindingDescription& bindDesc, 
+    std::vector<VkVertexInputAttributeDescription>& attDesc
+    )
 {
     VkPipelineVertexInputStateCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    createInfo.vertexBindingDescriptionCount = 0;
-    // createInfo.pVertexBindingDescriptions = nullptr; // optional
-    createInfo.vertexAttributeDescriptionCount = 0;
-    // createInfo.pVertexAttributeDescriptions = nullptr; // optional
+    createInfo.vertexBindingDescriptionCount = 1;
+    createInfo.pVertexBindingDescriptions = &bindDesc;
+    createInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attDesc.size());
+    createInfo.pVertexAttributeDescriptions = attDesc.data();
 
     return createInfo;
 /*
@@ -871,7 +888,44 @@ VkPipelineVertexInputStateCreateInfo HelloTriangleApp::GetVertexInput()
     VkPipelineColorBlendStateCreateInfo colorblendInfo = GetColorblending();
  *      Fixed functions -> Vertex input
  * 
+ * 
+ *  from udemy :
+ *      vertex input
+ * 
  */
+}
+
+VkVertexInputBindingDescription HelloTriangleApp::GetBindingDescription()
+{
+    VkVertexInputBindingDescription bindingDesc{};
+    bindingDesc.binding = 0;
+    bindingDesc.stride = sizeof(Vertex);
+    bindingDesc.inputRate =  VK_VERTEX_INPUT_RATE_VERTEX;
+
+    return bindingDesc;
+     
+/*
+ *  from udemy :
+ *      vertex input
+*/
+}
+
+std::vector<VkVertexInputAttributeDescription> HelloTriangleApp::GetAttributeDescription()
+{
+    std::vector<VkVertexInputAttributeDescription> attDesc( 1 );
+
+    // position attribute
+    attDesc[0].location = 0;
+    attDesc[0].binding = 0;
+    attDesc[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attDesc[0].offset = offsetof(Vertex, pos);
+
+    return attDesc;
+     
+/*
+ *  from udemy :
+ *      vertex input
+*/
 }
 
 VkPipelineInputAssemblyStateCreateInfo HelloTriangleApp::GetInputAssembly()

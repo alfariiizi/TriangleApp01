@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <glm/vec3.hpp>
 
 #include <optional>
 #include <vector>
@@ -34,4 +35,14 @@ public:
 public:
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;  // presentation family
+};
+
+struct Vertex
+{
+    glm::vec3 pos;
+    
+/*
+ *  from udemy :
+ *      vertex input
+*/
 };
