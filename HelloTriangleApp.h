@@ -14,8 +14,7 @@ const std::vector<const char*> deviceExtensions {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME // this extensions is for swapchain support
 };
 
-#include "QueueFamilyIndices.h"
-#include "SwapchainSupportDetails.h"
+#include "utilities.h"
 
 
 class HelloTriangleApp
