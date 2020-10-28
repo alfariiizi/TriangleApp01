@@ -461,10 +461,19 @@ void HelloTriangleApp::CreateLogicalDevice()
 // --- Mesh ---
 void HelloTriangleApp::CreateMeshFromVerteces()
 {
-    vertices.resize(3);
-    vertices[0] = {{ 0.0f, 0.5f, 0.0f }};
-    vertices[1] = {{ 0.5f, -0.5f, 0.0f }};
-    vertices[2] = {{ -0.5f, -0.5f, 0.0f }};
+    // kotak
+
+    vertices.resize(6);
+
+    vertices[0] = {{ 0.5f, 0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
+    vertices[1] = {{ 0.5f, -0.5f, 0.0f }, {1.0f, 0.0f, 0.0f }};
+    vertices[2] = {{ -0.5f, -0.5f, 0.0f }, {0.0f, 0.0f, 1.0f}};
+
+    vertices[3] = {{ 0.5f, 0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
+    vertices[4] = {{ -0.5f, -0.5f, 0.0f }, {0.0f, 0.0f, 1.0f}};
+    vertices[5] = {{ -0.5f, 0.5f, 0.0f }, {0.5f, 0.2f, 0.0f}};  
+
+
 
     mesh = Mesh( _physicalDevice, _device, vertices );
 }
@@ -929,13 +938,19 @@ VkVertexInputBindingDescription HelloTriangleApp::GetBindingDescription()
 
 std::vector<VkVertexInputAttributeDescription> HelloTriangleApp::GetAttributeDescription()
 {
-    std::vector<VkVertexInputAttributeDescription> attDesc( 1 );
+    std::vector<VkVertexInputAttributeDescription> attDesc( 2 );
 
     // position attribute
     attDesc[0].location = 0;
     attDesc[0].binding = 0;
     attDesc[0].format = VK_FORMAT_R32G32B32_SFLOAT;
     attDesc[0].offset = offsetof(Vertex, pos);
+
+    // color attribute
+    attDesc[1].location = 1;
+    attDesc[1].binding = 0;
+    attDesc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attDesc[1].offset = offsetof(Vertex, col);
 
     return attDesc;
      

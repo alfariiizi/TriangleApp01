@@ -113,4 +113,9 @@ private:
 
     VkPhysicalDevice _physicalDevice;
     VkDevice _device;
+
+/*
+ *  from udemy :
+ *      vertex input
+*/
 };

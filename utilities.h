@@ -39,7 +39,8 @@ public:
 
 struct Vertex
 {
-    glm::vec3 pos;
+    glm::vec3 pos;  // position
+    glm::vec3 col;  // color
     
 /*
  *  from udemy :
