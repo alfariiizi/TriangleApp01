@@ -15,6 +15,7 @@ const std::vector<const char*> deviceExtensions {
 };
 
 #include "utilities.h"
+#include "Mesh.h"
 
 
 class HelloTriangleApp
@@ -63,6 +64,9 @@ private:
 
 // Logical Device
     void CreateLogicalDevice();
+
+// mesh
+    void CreateMeshFromVerteces();
 
 // Swapchain
     SwapchainSupportDetails QuerySwapchainSupport( VkPhysicalDevice physicalDevice );
@@ -132,6 +136,10 @@ private:
     VkDebugUtilsMessengerEXT _debugMessenger;
     VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;
     VkDevice _device;
+
+    // mesh
+    std::vector<Vertex> vertices;
+    Mesh mesh;
 
     // queue
     VkQueue _graphicsQueue;

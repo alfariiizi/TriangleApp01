@@ -31,6 +31,9 @@ void HelloTriangleApp::InitVulkan()
 
     PickPhysicalDevice();   // physical device
     CreateLogicalDevice();  // logical device
+    
+    CreateMeshFromVerteces();   // mesh
+
     CreateSwapchain();      // swapchain
     CreateImageViews();     // image views
     CreateRenderPass();     // render pass
@@ -108,6 +111,8 @@ void HelloTriangleApp::MainLoop()
 
 void HelloTriangleApp::Cleanup()
 {
+    mesh.DestroyMeshesContent();
+
     for( size_t i = 0; i < HelloTriangleApp::MaxFrameInFlight; ++i )
     {
         vkDestroySemaphore( _device, _renderFinishedSemaphore[i], nullptr );   // render finished semaphore
@@ -450,6 +455,18 @@ void HelloTriangleApp::CreateLogicalDevice()
      */
 
 
+}
+
+
+// --- Mesh ---
+void HelloTriangleApp::CreateMeshFromVerteces()
+{
+    vertices.resize(3);
+    vertices[0] = {{ 0.0f, 0.5f, 0.0f }};
+    vertices[1] = {{ 0.5f, -0.5f, 0.0f }};
+    vertices[2] = {{ -0.5f, -0.5f, 0.0f }};
+
+    mesh = Mesh( _physicalDevice, _device, vertices );
 }
 
 
@@ -1211,8 +1228,15 @@ void HelloTriangleApp::CreateCommandBuffers()
         // --- basic draw command ---
         // bind pipeline
         vkCmdBindPipeline( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipeline );
+        
+        // bind vertex buffer
+        std::array<VkBuffer, 1> vertexBuffers = { mesh.GetVertexBuffer() };
+        std::array<VkDeviceSize, 1> offsets = { 0 };
+        vkCmdBindVertexBuffers( _commandBuffers[i], 0, static_cast<uint32_t>(vertexBuffers.size()), vertexBuffers.data(), offsets.data() );
+        
         // draw
-        vkCmdDraw( _commandBuffers[i], 3, 1, 0, 0 );
+        // vkCmdDraw( _commandBuffers[i], 3, 1, 0, 0 );     // before
+        vkCmdDraw( _commandBuffers[i], static_cast<uint32_t>(mesh.GetVertexCount()), 1, 0, 0 );        // after
         // --------------------------
 
         // --- Finish recording ---
