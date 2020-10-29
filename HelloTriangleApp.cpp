@@ -476,7 +476,9 @@ void HelloTriangleApp::CreateMeshFromVerteces()
 
 
     // queue for transfer usually is the same as queue for graphics
-    mesh = Mesh( _physicalDevice, _device, _graphicsQueue, _commandPool, vertices );
+    mesh = Mesh( _physicalDevice, _device, 
+                _graphicsQueue, _commandPool, 
+                Mesh::UsageBuffer::VERTEX_BUFFER, vertices );
 }
 
 
@@ -1246,13 +1248,13 @@ void HelloTriangleApp::CreateCommandBuffers()
         vkCmdBindPipeline( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipeline );
         
         // bind vertex buffer
-        std::array<VkBuffer, 1> vertexBuffers = { mesh.GetVertexBuffer() };
+        std::array<VkBuffer, 1> vertexBuffers = { mesh.GetBuffer() };   // GetBuffer: GetVertexBuffer
         std::array<VkDeviceSize, 1> offsets = { 0 };
         vkCmdBindVertexBuffers( _commandBuffers[i], 0, static_cast<uint32_t>(vertexBuffers.size()), vertexBuffers.data(), offsets.data() );
         
         // draw
         // vkCmdDraw( _commandBuffers[i], 3, 1, 0, 0 );     // before
-        vkCmdDraw( _commandBuffers[i], static_cast<uint32_t>(mesh.GetVertexCount()), 1, 0, 0 );        // after
+        vkCmdDraw( _commandBuffers[i], static_cast<uint32_t>(mesh.GetCount()), 1, 0, 0 );        // after; GetCount: GetVertexCount
         // --------------------------
 
         // --- Finish recording ---

@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #include <vector>
+#include <array>
 #include <memory.h>
 
 #include "utilities.h"
@@ -9,36 +10,54 @@
 class Mesh
 {
 public:
+    // bufferUsage
+    enum struct UsageBuffer // it's the same as bufferUsage, but I swap the name in order to not make confusion with bufferUsage
+    {
+        VERTEX_BUFFER,
+        INDEX_BUFFER
+    };
+private:
+    struct Content
+    {
+        int count;
+        VkBuffer buffer;
+        VkDeviceMemory bufferMemory;
+    };
+
+
+public:
     Mesh() = default;
-    Mesh( VkPhysicalDevice physicalDevice, VkDevice device, VkQueue transferQueue, VkCommandPool cmdPool ,std::vector<Vertex>& vertices )
+    Mesh( VkPhysicalDevice physicalDevice, VkDevice device, VkQueue transferQueue, VkCommandPool cmdPool, UsageBuffer usage, std::vector<Vertex>& vertices )
         :
         _physicalDevice( physicalDevice ),
         _device( device )
     {
-        _vertexCount = (int)vertices.size();
-        CreateVertexBuffer( transferQueue, cmdPool, vertices );
+        _content.count = (int)vertices.size();
+        CreateVertexBuffer( transferQueue, cmdPool, usage, vertices );
     }
-    int GetVertexCount()    // for cmd buffer record
+    int GetCount()    // for cmd buffer record
     {
-        return _vertexCount;
+        return _content.count;
     }
-    VkBuffer GetVertexBuffer()
+    VkBuffer GetBuffer()
     {
-        return _vertexBuffer;
+        return _content.buffer;
     }
+
     void DestroyMeshesContent()
     {
-        // destroy vertex buffer
-        vkDestroyBuffer( _device, _vertexBuffer, nullptr );
+        // destroy the buffer
+        vkDestroyBuffer( _device, _content.buffer, nullptr );
 
         // freeing vertex buffer memory
-        vkFreeMemory( _device, _vertexBufferMemory, nullptr );
+        vkFreeMemory( _device, _content.bufferMemory, nullptr );
     }
 
 private:
-    void CreateVertexBuffer( VkQueue transferQueue, VkCommandPool cmdPool, std::vector<Vertex>& vertices )
+    void CreateVertexBuffer( VkQueue transferQueue, VkCommandPool cmdPool, UsageBuffer usage, std::vector<Vertex>& vertices )
     {
         VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
+        
 
         // --- Staging Buffer (src buffer, store in CPU memory, CPU-GPU visible) ---
         VkBuffer staggingBuffer;
@@ -56,15 +75,15 @@ private:
         // ----------------------
 
         // --- Vertex Buffer (dst buffer, store in GPU memory, GPU only visible) ---
-        VkBufferUsageFlags bufferUsage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        VkBufferUsageFlags bufferUsage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | usagebufferlist[size_t(usage)];
         VkMemoryPropertyFlags memPropFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         
         Buffer::Create( _physicalDevice, _device, bufferSize, bufferUsage,
-                               memPropFlags, _vertexBuffer, _vertexBufferMemory );
+                               memPropFlags, _content.buffer, _content.bufferMemory );
         // ----------------------------------
 
         // copying stagging buffer to vertex buffer
-        Buffer::Copy( _device, transferQueue, cmdPool, bufferSize, staggingBuffer, _vertexBuffer );
+        Buffer::Copy( _device, transferQueue, cmdPool, bufferSize, staggingBuffer, _content.buffer );
         
 
         // because the content of stagging buffer has been copying to vertex buffer,
@@ -79,10 +98,14 @@ private:
         //      Device: is the GPU
     }
 
+
+
 private:
-    int _vertexCount;
-    VkBuffer _vertexBuffer;
-    VkDeviceMemory _vertexBufferMemory;
+    Content _content;
+    std::array<VkBufferUsageFlagBits, 2> usagebufferlist = {
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,      // usagebuffer ke - 0
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT        // usagebuffer ke - 1
+    };
 
     VkPhysicalDevice _physicalDevice;
     VkDevice _device;

@@ -139,6 +139,7 @@ private:
 
     // mesh
     std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
     Mesh mesh;
 
     // queue
