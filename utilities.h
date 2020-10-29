@@ -73,14 +73,14 @@ namespace Buffer
     }
 
 
-    static void CreateBuffer( VkPhysicalDevice physicalDevice, VkDevice device, size_t bufferSize,
+    static void Create( VkPhysicalDevice physicalDevice, VkDevice device, VkDeviceSize bufferSize,
                             VkBufferUsageFlags bufferUsage, VkMemoryPropertyFlags memPropFlags,
                             VkBuffer& buffer, VkDeviceMemory& bufferMemory )
     {
         // buffer info (doesn't include assigning memory)
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferInfo.size = static_cast<uint64_t>( bufferSize );
+        bufferInfo.size = static_cast<VkDeviceSize>( bufferSize );
         bufferInfo.usage = bufferUsage;
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         bufferInfo.queueFamilyIndexCount = 0;       // optional: just for concurent sharing mode
@@ -115,6 +115,64 @@ namespace Buffer
 
         // binding vertex buffer with the memory allocation
         vkBindBufferMemory( device, buffer, bufferMemory, 0 );
+    }
+
+    static void Copy( VkDevice device, VkQueue transferQueue, VkCommandPool commandPool, 
+                        VkDeviceSize bufferSize, VkBuffer& srcBuffer, VkBuffer& dstBuffer )
+    {
+        // allocate for temporary command buffer
+        VkCommandBufferAllocateInfo cmdBuffAllocInfo{};
+        cmdBuffAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        cmdBuffAllocInfo.commandPool = commandPool;
+        cmdBuffAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        cmdBuffAllocInfo.commandBufferCount = 1;
+
+        VkCommandBuffer tempCmdBuff;    // temp : temporary; this is just for transfer, and then destroy
+        // create temporary command buffer
+        if( vkAllocateCommandBuffers( device, &cmdBuffAllocInfo, &tempCmdBuff )
+            != VK_SUCCESS )
+        throw std::runtime_error( "Failed to create temporary command buffer! ");
+
+        // --- temporary command buffer recording ---
+        VkCommandBufferBeginInfo cmdBuffBeginInfo{};
+        cmdBuffBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        cmdBuffBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;   // because this cmdBuff gonna be immediately destroy after submitting it
+        cmdBuffBeginInfo.pInheritanceInfo = nullptr;    // optional
+        // temporary command buffer begin recording
+        if( vkBeginCommandBuffer( tempCmdBuff, &cmdBuffBeginInfo)
+            != VK_SUCCESS )
+        throw std::runtime_error( "Failed to beginning recording the temporary buffer!" );
+
+        // configure the region of memory
+        VkBufferCopy bufferCopyRegion{};
+        bufferCopyRegion.dstOffset = 0;
+        bufferCopyRegion.srcOffset = 0;
+        bufferCopyRegion.size = bufferSize;
+        // copy source buffer to destination buffer
+        vkCmdCopyBuffer( tempCmdBuff, srcBuffer, dstBuffer, 1, &bufferCopyRegion );
+
+        // temporary command buffer end recording
+        if( vkEndCommandBuffer( tempCmdBuff )
+            != VK_SUCCESS )
+        throw std::runtime_error( "Failed to end recording temporary command buffer!" );
+        // -----------------------------------------
+
+        // submit info
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &tempCmdBuff;
+
+        // submit temporary command buffer to transferQueue
+        if ( vkQueueSubmit( transferQueue, 1, &submitInfo, VK_NULL_HANDLE )
+            != VK_SUCCESS )
+        throw std::runtime_error( "Failed to submitting command buffer to transfer queue!" );
+
+        // wait to temporary command buffer being executed by transfer queue
+        vkQueueWaitIdle( transferQueue );
+
+        // freeing temporary command buffer
+        vkFreeCommandBuffers( device, commandPool, 1, &tempCmdBuff );
     }
 
 /*

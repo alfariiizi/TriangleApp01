@@ -31,8 +31,6 @@ void HelloTriangleApp::InitVulkan()
 
     PickPhysicalDevice();   // physical device
     CreateLogicalDevice();  // logical device
-    
-    CreateMeshFromVerteces();   // mesh
 
     CreateSwapchain();      // swapchain
     CreateImageViews();     // image views
@@ -40,6 +38,9 @@ void HelloTriangleApp::InitVulkan()
     CreateGraphicsPipeline(); // graphics pipeline
     CreateFramebuffers();   // framebuffers (swapchain framebuffer images)
     CreateCommandPool();    // command pool
+
+    CreateMeshFromVerteces();   // mesh
+
     CreateCommandBuffers(); // command buffers
     CreateSyncObjects();     // semaphores and fences
 }
@@ -474,8 +475,8 @@ void HelloTriangleApp::CreateMeshFromVerteces()
     vertices[5] = {{ -0.5f, 0.5f, 0.0f }, {0.5f, 0.2f, 0.0f}};  
 
 
-
-    mesh = Mesh( _physicalDevice, _device, vertices );
+    // queue for transfer usually is the same as queue for graphics
+    mesh = Mesh( _physicalDevice, _device, _graphicsQueue, _commandPool, vertices );
 }
 
 
