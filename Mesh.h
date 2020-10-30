@@ -27,13 +27,14 @@ private:
 
 public:
     Mesh() = default;
-    Mesh( VkPhysicalDevice physicalDevice, VkDevice device, VkQueue transferQueue, VkCommandPool cmdPool, UsageBuffer usage, std::vector<Vertex>& vertices )
+    template <typename T>
+    Mesh( VkPhysicalDevice physicalDevice, VkDevice device, VkQueue transferQueue, VkCommandPool cmdPool, UsageBuffer usage, std::vector<T>& list )
         :
         _physicalDevice( physicalDevice ),
         _device( device )
     {
-        _content.count = (int)vertices.size();
-        CreateVertexBuffer( transferQueue, cmdPool, usage, vertices );
+        _content.count = (int)list.size();
+        CreateVertexBuffer( transferQueue, cmdPool, usage, list );
     }
     int GetCount()    // for cmd buffer record
     {
@@ -54,9 +55,10 @@ public:
     }
 
 private:
-    void CreateVertexBuffer( VkQueue transferQueue, VkCommandPool cmdPool, UsageBuffer usage, std::vector<Vertex>& vertices )
+    template<typename T>
+    void CreateVertexBuffer( VkQueue transferQueue, VkCommandPool cmdPool, UsageBuffer usage, std::vector<T>& list )
     {
-        VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
+        VkDeviceSize bufferSize = sizeof(Vertex) * list.size();
         
 
         // --- Staging Buffer (src buffer, store in CPU memory, CPU-GPU visible) ---
@@ -70,7 +72,7 @@ private:
         // mapping the memory (yang baru saja dialokasikan) to vertex buffer
         void * data;
         vkMapMemory( _device, staggingBufferMemory, 0, bufferSize, 0, &data );
-        memcpy( data, vertices.data(), size_t(bufferSize) );
+        memcpy( data, list.data(), size_t(bufferSize) );
         vkUnmapMemory( _device, staggingBufferMemory );
         // ----------------------
 

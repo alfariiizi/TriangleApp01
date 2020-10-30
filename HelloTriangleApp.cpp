@@ -112,7 +112,8 @@ void HelloTriangleApp::MainLoop()
 
 void HelloTriangleApp::Cleanup()
 {
-    mesh.DestroyMeshesContent();
+    _vertexMesh.DestroyMeshesContent();
+    _indexMesh.DestroyMeshesContent();
 
     for( size_t i = 0; i < HelloTriangleApp::MaxFrameInFlight; ++i )
     {
@@ -464,21 +465,26 @@ void HelloTriangleApp::CreateMeshFromVerteces()
 {
     // kotak
 
-    vertices.resize(6);
+    _vertices.resize(4);
+    _vertices = {
+        {{ 0.5f, 0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }},   // top right
+        {{ 0.5f, -0.5f, 0.0f }, {1.0f, 0.0f, 0.0f }},   // bottom right
+        {{ -0.5f, -0.5f, 0.0f }, {0.0f, 0.0f, 1.0f}},   // bottom left
+        {{ -0.5f, 0.5f, 0.0f }, {0.5f, 0.2f, 0.0f}}     // top left
+    };
 
-    vertices[0] = {{ 0.5f, 0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
-    vertices[1] = {{ 0.5f, -0.5f, 0.0f }, {1.0f, 0.0f, 0.0f }};
-    vertices[2] = {{ -0.5f, -0.5f, 0.0f }, {0.0f, 0.0f, 1.0f}};
+    _indices = {
+        0, 1, 2,
+        1, 2, 3
+    };
 
-    vertices[3] = {{ 0.5f, 0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
-    vertices[4] = {{ -0.5f, -0.5f, 0.0f }, {0.0f, 0.0f, 1.0f}};
-    vertices[5] = {{ -0.5f, 0.5f, 0.0f }, {0.5f, 0.2f, 0.0f}};  
-
-
-    // queue for transfer usually is the same as queue for graphics
-    mesh = Mesh( _physicalDevice, _device, 
+    // note: queue for transfer usually is the same as queue for graphics
+    _vertexMesh = Mesh( _physicalDevice, _device, 
                 _graphicsQueue, _commandPool, 
-                Mesh::UsageBuffer::VERTEX_BUFFER, vertices );
+                Mesh::UsageBuffer::VERTEX_BUFFER, _vertices );
+    
+    _indexMesh = Mesh( _physicalDevice, _device, _graphicsQueue, _commandPool,
+                        Mesh::UsageBuffer::INDEX_BUFFER, _indices );
 }
 
 
@@ -1248,13 +1254,15 @@ void HelloTriangleApp::CreateCommandBuffers()
         vkCmdBindPipeline( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipeline );
         
         // bind vertex buffer
-        std::array<VkBuffer, 1> vertexBuffers = { mesh.GetBuffer() };   // GetBuffer: GetVertexBuffer
+        std::array<VkBuffer, 1> vertexBuffers = { _vertexMesh.GetBuffer() };   // GetBuffer: GetVertexBuffer
         std::array<VkDeviceSize, 1> offsets = { 0 };
-        vkCmdBindVertexBuffers( _commandBuffers[i], 0, static_cast<uint32_t>(vertexBuffers.size()), vertexBuffers.data(), offsets.data() );
-        
+        vkCmdBindVertexBuffers( _commandBuffers[i], 0, static_cast<uint32_t>(vertexBuffers.size()), vertexBuffers.data(), offsets.data() ); // cmd vertex buffer"s" (with 's')
+        vkCmdBindIndexBuffer( _commandBuffers[i], _indexMesh.GetBuffer(), 0, VK_INDEX_TYPE_UINT32 ); // cmd index buffer (without 's')
+
         // draw
         // vkCmdDraw( _commandBuffers[i], 3, 1, 0, 0 );     // before
-        vkCmdDraw( _commandBuffers[i], static_cast<uint32_t>(mesh.GetCount()), 1, 0, 0 );        // after; GetCount: GetVertexCount
+        // vkCmdDraw( _commandBuffers[i], static_cast<uint32_t>(vertexMesh.GetCount()), 1, 0, 0 );        // after; GetCount: GetVertexCount
+        vkCmdDrawIndexed( _commandBuffers[i], _indexMesh.GetCount(), 1, 0, 0, 0 );
         // --------------------------
 
         // --- Finish recording ---

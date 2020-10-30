@@ -138,9 +138,10 @@ private:
     VkDevice _device;
 
     // mesh
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
-    Mesh mesh;
+    std::vector<Vertex> _vertices;
+    std::vector<uint32_t> _indices;
+    Mesh _vertexMesh;
+    Mesh _indexMesh;
 
     // queue
     VkQueue _graphicsQueue;
